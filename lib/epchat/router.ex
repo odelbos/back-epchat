@@ -16,6 +16,8 @@ defmodule Epchat.Router do
     """)
   end
 
+  forward "/api", to: Epchat.ApiRouter
+
   get "/ws" do
     conn
     |> WebSockAdapter.upgrade(Epchat.ChannelHandler, [], timeout: 60_000)
@@ -23,6 +25,6 @@ defmodule Epchat.Router do
   end
 
   match _ do
-    send_resp(conn, 404, "not found")
+    send_resp conn, 404, "not found"
   end
 end
