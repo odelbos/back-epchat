@@ -16,7 +16,7 @@ defmodule Epchat.Router do
     """)
   end
 
-  forward "/api", to: Epchat.ApiRouter
+  forward "/api/v1", to: Epchat.ApiRouter
 
   get "/ws" do
     conn
