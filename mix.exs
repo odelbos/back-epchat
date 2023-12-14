@@ -24,6 +24,7 @@ defmodule Epchat.MixProject do
     [
       {:bandit, "~> 1.0"},
       {:websock_adapter, "~> 0.5.5"},
+      {:jason, "~> 1.4"},
     ]
   end
 end
