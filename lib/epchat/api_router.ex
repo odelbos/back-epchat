@@ -29,6 +29,9 @@ defmodule Epchat.ApiRouter do
             send_500_internal_error conn, "Cannot update user"
           :param_error ->
             send_400_bad_params conn
+          # TODO: This case is not managed correctly
+          # {:ok, nil} ->
+          #   :error
           {:ok, user} ->
             Logger.debug "Updated user: #{user.id}"
             create_channel conn, user
