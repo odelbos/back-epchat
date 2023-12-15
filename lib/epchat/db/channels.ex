@@ -7,11 +7,11 @@ defmodule Epchat.Db.Channels do
     query = """
       INSERT INTO 'channels' (id, owner_id, last_activity_at) VALUES (?, ?, ?); 
     """
-    # TODO: Get the ids length from config
     # TODO: Check that id does not already exists
 
     # -----------------------------------------Duplicate-Code-------- DUP-001
-    id = Epchat.Utils.generate_b62 15
+    conf = Application.fetch_env! :epchat, :db
+    id = Epchat.Utils.generate_b62 conf.ids_length
     case Db.execute query, [id, user.id, :os.system_time(:second)] do
       {:ok, [], []} -> get id
       _ -> :error

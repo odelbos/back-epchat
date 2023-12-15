@@ -7,11 +7,12 @@ defmodule Epchat.Db.Users do
     query = """
       INSERT INTO 'users' (id, nickname) VALUES (?, ?); 
     """
-    # TODO: Get the ids length from config
+
     # TODO: Check that id does not already exists
 
     # -----------------------------------------Duplicate-Code-------- DUP-001
-    id = Epchat.Utils.generate_b62 15
+    conf = Application.fetch_env! :epchat, :db
+    id = Epchat.Utils.generate_b62 conf.ids_length
     case Db.execute query, [id, nickname] do
       {:ok, [], []} -> get id
       _ -> :error
@@ -38,23 +39,27 @@ defmodule Epchat.Db.Users do
     query = """
       SELECT id, nickname FROM 'users'; 
     """
+    # -----------------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query do
       {:ok, [], _} -> []
       {:ok, rows, fields} ->
         Utils.reshape_as_list_of_map rows, fields
       _ -> :error
     end
+    # ------------------------------------------------------------- / DUP-003
   end
 
   def update(id, nickname) do
     query = """
       UPDATE 'users' SET nickname=? WHERE id=?; 
     """
+    # -----------------------------------------Duplicate-Code-------- DUP-004
     case Db.execute query, [nickname, id] do
       {:ok, [], []} -> get id
       {:error, reason} ->
         Logger.debug "Cannot update user, reason: #{reason}"
         {:error, reason}
     end
+    # ------------------------------------------------------------- / DUP-004
   end
 end
