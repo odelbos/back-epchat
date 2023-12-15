@@ -27,7 +27,7 @@ defmodule Epchat.Router do
             send_resp conn, 500, "Internal Error"
           nil ->
             send_resp conn, 400, "Error: Bad or missing parameters"
-          user ->
+          {:ok, user} ->
             result =
               conn
               |> WebSockAdapter.upgrade(Epchat.ChannelHandler, [], timeout: 60_000)

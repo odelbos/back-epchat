@@ -34,7 +34,7 @@ defmodule Epchat.Db.Users do
       {:ok, [], _} -> nil
       {:ok, rows, fields} ->
         [first | _rest] = Utils.reshape_as_list_of_map rows, fields
-        first
+        {:ok, first}
       {:error, reason} ->
         Logger.debug "Cannot get user, reason: #{reason}"
         {:error, reason}
@@ -50,7 +50,7 @@ defmodule Epchat.Db.Users do
     case Db.execute query do
       {:ok, [], _} -> []
       {:ok, rows, fields} ->
-        Utils.reshape_as_list_of_map rows, fields
+        {:ok, Utils.reshape_as_list_of_map(rows, fields)}
       {:error, reason} ->
         Logger.debug "Cannot get all users, reason: #{reason}"
         {:error, reason}

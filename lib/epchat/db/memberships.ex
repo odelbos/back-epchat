@@ -31,7 +31,7 @@ defmodule Epchat.Db.Memberships do
     case Db.execute query, [channel_id, user_id] do
       {:ok, [], _} -> nil
       {:ok, [row | _rest], fields} ->
-        Utils.reshape_row_as_map row, fields
+        {:ok, Utils.reshape_row_as_map(row, fields)}
       {:error, reason} ->
         Logger.debug "Cannot get membership, reason: #{reason}"
         {:error, reason}
@@ -71,7 +71,7 @@ defmodule Epchat.Db.Memberships do
     case Db.execute query, [channel_id] do
       {:ok, [], _} -> []
       {:ok, rows, fields} ->
-        Utils.reshape_as_list_of_map rows, fields
+        {:ok, Utils.reshape_as_list_of_map(rows, fields)}
       {:error, reason} ->
         Logger.debug "Cannot get all channel membership, reason: #{reason}"
         {:error, reason}

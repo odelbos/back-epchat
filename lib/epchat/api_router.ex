@@ -29,7 +29,7 @@ defmodule Epchat.ApiRouter do
             send_500_internal_error conn, "Cannot update user"
           :param_error ->
             send_400_bad_params conn
-          user ->
+          {:ok, user} ->
             Logger.debug "Updated user: #{user.id}"
             create_channel conn, user
         end
@@ -41,7 +41,7 @@ defmodule Epchat.ApiRouter do
             send_500_internal_error conn, "Cannot create user"
           :param_error ->
             send_400_bad_params conn
-          user ->
+          {:ok, user} ->
             Logger.debug "Created user: #{user.id}"
             create_channel conn, user
         end
@@ -64,7 +64,7 @@ defmodule Epchat.ApiRouter do
         send_500_internal_error conn, "Cannot create channel"
       nil ->
         send_500_internal_error conn, "Cannot create channel"
-      channel ->
+      {:ok, channel} ->
         Logger.debug "Created channel: #{channel.id}"
         data = %{
           status: 200,

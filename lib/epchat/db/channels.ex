@@ -29,7 +29,7 @@ defmodule Epchat.Db.Channels do
       {:ok, [], _} -> nil
       {:ok, rows, fields} ->
         [first | _rest] = Utils.reshape_as_list_of_map rows, fields
-        first
+        {:ok, first}
       {:error, reason} ->
         Logger.debug "Cannot get channel, reason: #{reason}"
         {:error, reason}
@@ -45,7 +45,7 @@ defmodule Epchat.Db.Channels do
     case Db.execute query do
       {:ok, [], _} -> []
       {:ok, rows, fields} ->
-        Utils.reshape_as_list_of_map rows, fields
+        {:ok, Utils.reshape_as_list_of_map(rows, fields)}
       {:error, reason} ->
         Logger.debug "Cannot get all channels, reason: #{reason}"
         {:error, reason}
