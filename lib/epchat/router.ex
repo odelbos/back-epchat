@@ -19,9 +19,23 @@ defmodule Epchat.Router do
   forward "/api/v1", to: Epchat.ApiRouter
 
   get "/ws" do
-    conn
-    |> WebSockAdapter.upgrade(Epchat.ChannelHandler, [], timeout: 60_000)
-    |> halt()
+    conn = fetch_query_params conn
+    case conn.params do
+      %{"u" => user_id} ->
+        case Epchat.Db.Users.get user_id do
+          {:error, _reason} ->
+            send_resp conn, 500, "Internal Error"
+          nil ->
+            send_resp conn, 400, "Error: Bad or missing parameters"
+          _user ->
+            conn
+            |> WebSockAdapter.upgrade(Epchat.ChannelHandler, [], timeout: 60_000)
+            |> halt()
+        end
+      _ ->
+        send_resp conn, 400, "Error: Bad or missing parameters"
+
+    end
   end
 
   match _ do
