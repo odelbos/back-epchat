@@ -7,17 +7,20 @@ defmodule Epchat.Db.Users do
     query = """
       INSERT INTO 'users' (id, nickname) VALUES (?, ?); 
     """
-
-    # TODO: Check that id does not already exists
-
-    # -----------------------------------------Duplicate-Code-------- DUP-001
-    conf = Application.fetch_env! :epchat, :db
-    id = Epchat.Utils.generate_b62 conf.ids_length
-    case Db.execute query, [id, nickname] do
-      {:ok, [], []} -> get id
-      _ -> :error
+    case validate_nickname nickname do
+      true ->
+        # -----------------------------------------Duplicate-Code-------- DUP-001
+        # TODO: Check that id does not already exists
+        conf = Application.fetch_env! :epchat, :db
+        id = Epchat.Utils.generate_b62 conf.ids_length
+        case Db.execute query, [id, nickname] do
+          {:ok, [], []} -> get id
+          _ -> :error
+        end
+        # ------------------------------------------------------------- / DUP-001
+      false ->
+        :param_error
     end
-    # ------------------------------------------------------------- / DUP-001
   end
 
   def get(id) do
@@ -53,13 +56,24 @@ defmodule Epchat.Db.Users do
     query = """
       UPDATE 'users' SET nickname=? WHERE id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-004
-    case Db.execute query, [nickname, id] do
-      {:ok, [], []} -> get id
-      {:error, reason} ->
-        Logger.debug "Cannot update user, reason: #{reason}"
-        {:error, reason}
+    case validate_nickname nickname do
+      true ->
+        # -----------------------------------------Duplicate-Code-------- DUP-004
+        case Db.execute query, [nickname, id] do
+          {:ok, [], []} -> get id
+          {:error, reason} ->
+            Logger.debug "Cannot update user, reason: #{reason}"
+            {:error, reason}
+        end
+        # ------------------------------------------------------------- / DUP-004
+      false ->
+        :param_error
     end
-    # ------------------------------------------------------------- / DUP-004
+  end
+
+  # -----
+
+  defp validate_nickname(nickname) do
+    String.length(nickname) > 1 and String.length(nickname) < 15
   end
 end
