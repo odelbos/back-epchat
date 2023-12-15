@@ -36,4 +36,13 @@ defmodule Epchat.Db.Utils do
   defp do_reshape_row_as_map([value | row_rest], [name | fields_rest], acc) do
     do_reshape_row_as_map row_rest, fields_rest, Map.put(acc, String.to_atom(name), value)
   end
+
+  # -----
+
+  # Helper to validate database id format (pk)
+  def validate_id(id) do
+    conf = Application.fetch_env! :epchat, :db
+    re = "^[a-zA-Z0-9]{#{conf.ids_length}}$"
+    String.match? id, ~r/#{re}/
+  end
 end
