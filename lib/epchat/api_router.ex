@@ -29,6 +29,7 @@ defmodule Epchat.ApiRouter do
         Logger.debug "Nickname: #{nickname} - UserId: #{uid}"
 
         # TODO: Update the user nickname
+        Epchat.Db.Users.update uid, nickname
 
         create_channel conn, "abcd", nickname
 
@@ -39,6 +40,12 @@ defmodule Epchat.ApiRouter do
         Logger.debug "Nickname: #{nickname}"
 
         # TODO: Create the user
+        user = Epchat.Db.Users.create nickname
+
+        # --------------------------------------- debug
+        IO.puts "Created user:"
+        IO.inspect user
+        # ------------------------------------- / debug
 
         create_channel conn, "abcd", nickname
 
