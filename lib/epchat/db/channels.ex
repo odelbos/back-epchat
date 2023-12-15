@@ -7,14 +7,15 @@ defmodule Epchat.Db.Channels do
     query = """
       INSERT INTO 'channels' (id, owner_id, last_activity_at) VALUES (?, ?, ?); 
     """
-    # TODO: Check that id does not already exists
-
     # -----------------------------------------Duplicate-Code-------- DUP-001
+    # TODO: Check that id does not already exists
     conf = Application.fetch_env! :epchat, :db
     id = Epchat.Utils.generate_b62 conf.ids_length
     case Db.execute query, [id, user.id, :os.system_time(:second)] do
       {:ok, [], []} -> get id
-      _ -> :error
+      {:error, reason} ->
+        Logger.debug "Cannot create channel, reason: #{reason}"
+        {:error, reason}
     end
     # ------------------------------------------------------------- / DUP-001
   end
@@ -29,7 +30,9 @@ defmodule Epchat.Db.Channels do
       {:ok, rows, fields} ->
         [first | _rest] = Utils.reshape_as_list_of_map rows, fields
         first
-      _ -> :error
+      {:error, reason} ->
+        Logger.debug "Cannot get channel, reason: #{reason}"
+        {:error, reason}
     end
     # ------------------------------------------------------------- / DUP-002
   end
@@ -43,7 +46,9 @@ defmodule Epchat.Db.Channels do
       {:ok, [], _} -> []
       {:ok, rows, fields} ->
         Utils.reshape_as_list_of_map rows, fields
-      _ -> :error
+      {:error, reason} ->
+        Logger.debug "Cannot get all channels, reason: #{reason}"
+        {:error, reason}
     end
     # ------------------------------------------------------------- / DUP-003
   end
@@ -56,7 +61,7 @@ defmodule Epchat.Db.Channels do
     case Db.execute query, [:os.system_time(:second), id] do
       {:ok, [], []} -> get id
       {:error, reason} ->
-        Logger.debug "Cannot update user, reason: #{reason}"
+        Logger.debug "Cannot update channel, reason: #{reason}"
         {:error, reason}
     end
     # ------------------------------------------------------------- / DUP-004

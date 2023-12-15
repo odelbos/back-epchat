@@ -15,7 +15,9 @@ defmodule Epchat.Db.Users do
         id = Epchat.Utils.generate_b62 conf.ids_length
         case Db.execute query, [id, nickname] do
           {:ok, [], []} -> get id
-          _ -> :error
+          {:error, reason} ->
+            Logger.debug "Cannot create user, reason: #{reason}"
+            {:error, reason}
         end
         # ------------------------------------------------------------- / DUP-001
       false ->
@@ -33,7 +35,9 @@ defmodule Epchat.Db.Users do
       {:ok, rows, fields} ->
         [first | _rest] = Utils.reshape_as_list_of_map rows, fields
         first
-      _ -> :error
+      {:error, reason} ->
+        Logger.debug "Cannot get user, reason: #{reason}"
+        {:error, reason}
     end
     # ------------------------------------------------------------- / DUP-002
   end
@@ -47,7 +51,9 @@ defmodule Epchat.Db.Users do
       {:ok, [], _} -> []
       {:ok, rows, fields} ->
         Utils.reshape_as_list_of_map rows, fields
-      _ -> :error
+      {:error, reason} ->
+        Logger.debug "Cannot get all users, reason: #{reason}"
+        {:error, reason}
     end
     # ------------------------------------------------------------- / DUP-003
   end
