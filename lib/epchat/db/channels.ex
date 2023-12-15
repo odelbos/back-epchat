@@ -26,7 +26,7 @@ defmodule Epchat.Db.Channels do
     """
     # -----------------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
-      {:ok, [], _} -> nil
+      {:ok, [], _} -> {:ok, nil}
       {:ok, rows, fields} ->
         [first | _rest] = Utils.reshape_as_list_of_map rows, fields
         {:ok, first}
@@ -43,7 +43,7 @@ defmodule Epchat.Db.Channels do
     """
     # -----------------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query do
-      {:ok, [], _} -> []
+      {:ok, [], _} -> {:ok, []}
       {:ok, rows, fields} ->
         {:ok, Utils.reshape_as_list_of_map(rows, fields)}
       {:error, reason} ->

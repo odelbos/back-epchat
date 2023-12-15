@@ -29,7 +29,7 @@ defmodule Epchat.Db.Memberships do
     """
     # TODO: ----------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [channel_id, user_id] do
-      {:ok, [], _} -> nil
+      {:ok, [], _} -> {:ok, nil}
       {:ok, [row | _rest], fields} ->
         {:ok, Utils.reshape_row_as_map(row, fields)}
       {:error, reason} ->
@@ -69,7 +69,7 @@ defmodule Epchat.Db.Memberships do
     """
     # TODO: ----------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query, [channel_id] do
-      {:ok, [], _} -> []
+      {:ok, [], _} -> {:ok, []}
       {:ok, rows, fields} ->
         {:ok, Utils.reshape_as_list_of_map(rows, fields)}
       {:error, reason} ->
