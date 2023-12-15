@@ -6,4 +6,15 @@ defmodule Epchat.Utils do
     |> String.replace(["+", "/"], "")
     |> String.slice(0..length-1) 
   end
+
+  def pid_to_string(pid) do
+    pid
+    |> :erlang.pid_to_list()
+    |> List.delete_at(0) |> List.delete_at(-1) |> to_string()
+  end
+
+  # Stolen from Elixir source code : lib/iex/lib/iex/helpers.ex
+  def string_to_pid(str) do
+    :erlang.list_to_pid ~c"<#{str}>"
+  end
 end
