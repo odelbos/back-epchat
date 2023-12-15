@@ -23,43 +23,30 @@ defmodule Epchat.ApiRouter do
   post "/channels/create" do
     case conn.body_params do
       %{"user_id" => uid, "nickname" => nickname} ->
-        #
-        # TODO: Validate uid, nickname
-        #
         Logger.debug "Nickname: #{nickname} - UserId: #{uid}"
-
-        # TODO: Update the user nickname
-        Epchat.Db.Users.update uid, nickname
-
-        create_channel conn, "abcd", nickname
+        case Epchat.Db.Users.update uid, nickname do
+          {:error, _reason} ->
+            send_500_internal_error conn, "Cannot update user"
+          :param_error ->
+            send_400_bad_params conn
+          user ->
+            Logger.debug "Updated user: #{user.id}"
+            create_channel conn, user
+        end
 
       %{"nickname" => nickname} ->
-        #
-        # TODO: Validate nickname
-        #
         Logger.debug "Nickname: #{nickname}"
-
-        # TODO: Create the user
-        user = Epchat.Db.Users.create nickname
-
-        # --------------------------------------- debug
-        IO.puts "Created user:"
-        IO.inspect user
-        # ------------------------------------- / debug
-
-        create_channel conn, "abcd", nickname
-
+        case Epchat.Db.Users.create nickname do
+          {:error, _reason} ->
+            send_500_internal_error conn, "Cannot create user"
+          :param_error ->
+            send_400_bad_params conn
+          user ->
+            Logger.debug "Created user: #{user.id}"
+            create_channel conn, user
+        end
       _ ->
-        Logger.debug "Error, no nickname provided"
-        data = %{
-          status: "400",
-          msg: "Missing 'nickname' parameter",
-        }
-        conn
-        |> put_resp_header("Access-Control-Allow-Origin", "*")
-        |> put_resp_header("Content_Type", "application/json;charset=UTF-8")
-        |> send_resp(400, Jason.encode!(data))
-        |> halt()
+        send_400_bad_params conn
     end
   end
 
@@ -71,22 +58,48 @@ defmodule Epchat.ApiRouter do
   # -------------------------------------------------------------
   # Private
   # -------------------------------------------------------------
+  defp create_channel(conn, user) do
+    case Epchat.Db.Channels.create user do
+      {:error, _reason} ->
+        send_500_internal_error conn, "Cannot create channel"
+      nil ->
+        send_500_internal_error conn, "Cannot create channel"
+      channel ->
+        Logger.debug "Created channel: #{channel.id}"
+        data = %{
+          status: 200,
+          user: %{
+            id: user.id,
+            nickname: user.nickname,
+          },
+          channel: %{
+            id: channel.id,
+            owner_id: channel.owner_id,
+            members: [],
+          }
+        }
+        send_with_status conn, 200, data
+    end
+  end
 
-  defp create_channel(conn, user_id, nickname) do
-    #
-    # TODO: Create the channel
-    #
-    data = %{
-      channel_id: "abcd",
-      owner_id: user_id,
-      owner_nickname: nickname,
-    }
-    json = Jason.encode! data
+  # -----
 
+  defp send_with_status(conn, status, data) do
     conn
     |> put_resp_header("Access-Control-Allow-Origin", "*")
     |> put_resp_header("Content_Type", "application/json;charset=UTF-8")
-    |> send_resp(200, json)
+    |> send_resp(status, Jason.encode! data)
+  end
+
+  defp send_500_internal_error(conn, msg) do
+    Logger.debug msg
+    send_with_status conn, 500, %{status: 500, msg: msg}
+  end
+
+  defp send_400_bad_params(conn) do
+    Logger.debug "Error, bad or missing parameter"
+    data = %{status: 400, msg: "Error, bad or missing parameter"}
+    send_with_status conn, 400, data
   end
 end
 
