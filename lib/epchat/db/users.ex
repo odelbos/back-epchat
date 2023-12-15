@@ -9,18 +9,21 @@ defmodule Epchat.Db.Users do
     """
     # TODO: Get the ids length from config
     # TODO: Check that id does not already exists
-    id = Epchat.Utils.generate_b62 15
 
+    # -----------------------------------------Duplicate-Code-------- DUP-001
+    id = Epchat.Utils.generate_b62 15
     case Db.execute query, [id, nickname] do
       {:ok, [], []} -> get id
       _ -> :error
     end
+    # ------------------------------------------------------------- / DUP-001
   end
 
   def get(id) do
     query = """
       SELECT id, nickname FROM 'users' WHERE id=?; 
     """
+    # -----------------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
       {:ok, [], _} -> nil
       {:ok, rows, fields} ->
@@ -28,6 +31,7 @@ defmodule Epchat.Db.Users do
         first
       _ -> :error
     end
+    # ------------------------------------------------------------- / DUP-002
   end
 
   def all() do
