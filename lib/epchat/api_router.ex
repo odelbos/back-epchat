@@ -62,7 +62,7 @@ defmodule Epchat.ApiRouter do
     case Epchat.Db.Channels.create user do
       {:error, _reason} ->
         send_500_internal_error conn, "Cannot create channel"
-      nil ->
+      {:ok, nil} ->
         send_500_internal_error conn, "Cannot create channel"
       {:ok, channel} ->
         Logger.debug "Created channel: #{channel.id}"
