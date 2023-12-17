@@ -1,7 +1,8 @@
 defmodule Epchat.ChannelHandler do
+  alias Epchat.Channels
 
   def init(_args) do
-    {:ok, %{user_id: nil}}
+    {:ok, %{user_id: nil, channels: []}}
   end
 
   # -----
@@ -15,5 +16,52 @@ defmodule Epchat.ChannelHandler do
 
   def handle_in({"ping", [opcode: :text]}, state) do
     {:reply, :ok, {:text, "pong"}, state}
+  end
+
+  # All messages must have the following format:
+  # {
+  #   "channel_id": ...,
+  #   "event": ...,
+  #   data: ...,
+  # }
+  # ... and must be JSON encoded.
+  def handle_in({msg, [opcode: :text]}, state) do
+    payload = Jason.decode! msg, keys: :atoms!
+    %{channel_id: channel_id, event: event, data: data} = payload
+    event channel_id, event, data, state
+  end
+
+  # -----
+
+  def event(channel_id, "ch_join", _data, state) do
+    case Channels.join channel_id, state.user_id, self() do
+      {:ok, msg} ->
+        new_state = Map.put(state, :channels, [channel_id | state.channels])
+
+        # TODO: -----------------------------Duplicate-Code----- REF-020
+        data = %{
+          channel_id: channel_id,
+          event: "ch_joined",
+          data: msg,
+        }
+        # TODO: Hendle json encoding error
+        {_, json} = Jason.encode_to_iodata data
+        {:reply, :ok, {:text, json}, new_state}
+        # ----------------------------------------------------- / REF-020
+
+      _error ->
+        # TODO: -----------------------------Duplicate-Code----- REF-020
+        data = %{
+          channel_id: channel_id,
+          event: "ch_error",
+          data: %{
+            msg: "Cannot join the channel",
+          },
+        }
+        # TODO: Hendle json encoding error
+        {_, json} = Jason.encode_to_iodata data
+        {:reply, :ok, {:text, json}, state}
+        # ----------------------------------------------------- / REF-020
+    end
   end
 end
