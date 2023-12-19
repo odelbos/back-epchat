@@ -14,8 +14,8 @@ defmodule Epchat.ChannelHandler do
 
   # -----
 
-  def handle_in({"ping", [opcode: :text]}, state) do
-    {:reply, :ok, {:text, "pong"}, state}
+  def handle_in({"sk_ping", [opcode: :text]}, state) do
+    {:reply, :ok, {:text, '{"event": "sk_pong"}'}, state}
   end
 
   # All messages must have the following format:
