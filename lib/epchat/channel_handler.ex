@@ -44,19 +44,7 @@ defmodule Epchat.ChannelHandler do
         new_state = Map.put(state, :channels, [channel_id | state.channels])
         reply channel_id, :ch_joined, msg, new_state
 
-      {:error, _reason} ->
-        # TODO: -----------------------------Duplicate-Code----- REF-020
-        data = %{
-          channel_id: channel_id,
-          event: "ch_error",
-          data: %{
-            msg: "Cannot join the channel",
-          },
-        }
-        # TODO: Hendle json encoding error
-        {_, json} = Jason.encode_to_iodata data
-        {:reply, :ok, {:text, json}, state}
-        # ----------------------------------------------------- / REF-020
+      error -> reply_error channel_id, error, state
     end
   end
 
@@ -65,19 +53,7 @@ defmodule Epchat.ChannelHandler do
       {:ok, msg} ->
         reply channel_id, :ch_members, msg, state
 
-      {:error, _reason} ->
-        # TODO: -----------------------------Duplicate-Code----- REF-020
-        data = %{
-          channel_id: channel_id,
-          event: "ch_error",
-          data: %{
-            msg: "Cannot get the channel members",
-          },
-        }
-        # TODO: Hendle json encoding error
-        {_, json} = Jason.encode_to_iodata data
-        {:reply, :ok, {:text, json}, state}
-        # ----------------------------------------------------- / REF-020
+      error -> reply_error channel_id, error, state
     end
   end
 
@@ -92,5 +68,26 @@ defmodule Epchat.ChannelHandler do
     # TODO: Hendle json encoding error
     {_, json} = Jason.encode_to_iodata data
     {:reply, :ok, {:text, json}, state}
+  end
+
+  defp reply_error(channel_id, error, state) do
+    msg = case error do
+      {:error, _reason} ->
+        %{code: 500, msg: "Internal Server Error"}
+
+      {:not_member, :not_member} ->
+        %{code: 400, tag: :not_member, msg: "Not a channel member"}
+
+      {:not_found, :channel_and_user} ->
+        %{code: 400, tag: :channel_and_user, msg: "Channel and user does not exists"}
+
+      {:not_found, :channel} ->
+        %{code: 400, tag: :channel, msg: "Channel does not exists"}
+
+      {:not_found, :user} ->
+        %{code: 400, tag: :user, msg: "User does not exists"}
+    end
+
+    reply channel_id, :ch_error, msg, state
   end
 end
