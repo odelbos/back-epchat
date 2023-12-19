@@ -12,6 +12,11 @@ defmodule Epchat.ChannelHandler do
     {:ok, Map.put(state, :user_id, user_id)}
   end
 
+  # Push a msg from server to client
+  def handle_info({:push, _opcode, msg}, state) do
+    {:reply, :ok, {:text, msg}, state}
+  end
+  
   # -----
 
   def handle_in({"sk_ping", [opcode: :text]}, state) do
