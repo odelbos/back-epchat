@@ -3,9 +3,6 @@ defmodule Epchat.Channels do
   alias Epchat.Db
 
   def join(channel_id, user_id, pid) do
-    #
-    # TODO: Need to broadcast the join to all other channel members
-    #
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
