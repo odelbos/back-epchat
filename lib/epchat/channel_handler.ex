@@ -49,13 +49,43 @@ defmodule Epchat.ChannelHandler do
         {:reply, :ok, {:text, json}, new_state}
         # ----------------------------------------------------- / REF-020
 
-      _error ->
+      {:error, _reason} ->
         # TODO: -----------------------------Duplicate-Code----- REF-020
         data = %{
           channel_id: channel_id,
           event: "ch_error",
           data: %{
             msg: "Cannot join the channel",
+          },
+        }
+        # TODO: Hendle json encoding error
+        {_, json} = Jason.encode_to_iodata data
+        {:reply, :ok, {:text, json}, state}
+        # ----------------------------------------------------- / REF-020
+    end
+  end
+
+  def event(channel_id, "ch_members", _data, state) do
+    case Channels.members channel_id, state.user_id do
+      {:ok, msg} ->
+        # TODO: -----------------------------Duplicate-Code----- REF-020
+        data = %{
+          channel_id: channel_id,
+          event: "ch_members",
+          data: msg,
+        }
+        # TODO: Hendle json encoding error
+        {_, json} = Jason.encode_to_iodata data
+        {:reply, :ok, {:text, json}, state}
+        # ----------------------------------------------------- / REF-020
+
+      {:error, _reason} ->
+        # TODO: -----------------------------Duplicate-Code----- REF-020
+        data = %{
+          channel_id: channel_id,
+          event: "ch_error",
+          data: %{
+            msg: "Cannot get the channel members",
           },
         }
         # TODO: Hendle json encoding error
