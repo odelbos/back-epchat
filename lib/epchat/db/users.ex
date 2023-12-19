@@ -21,7 +21,7 @@ defmodule Epchat.Db.Users do
         end
         # ------------------------------------------------------------- / DUP-001
       false ->
-        :param_error
+        {:error, :bad_params}
     end
   end
 
@@ -83,7 +83,7 @@ defmodule Epchat.Db.Users do
         end
         # ------------------------------------------------------------- / DUP-004
       false ->
-        :param_error
+        {:error, :bad_params}
     end
   end
 

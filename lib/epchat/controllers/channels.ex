@@ -6,12 +6,10 @@ defmodule Epchat.Controllers.Channels do
   def create(conn, %{"user_id" => user_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname} - UserId: #{user_id}"
     case Db.Users.create_or_update user_id, nickname do
+      {:error, :bad_params} -> send_400_bad_params conn
       {:error, reason} ->
         send_500_internal_error conn, reason, "Cannot update user"
-      :param_error ->
-        send_400_bad_params conn
-      {:ok, nil} ->
-        send_400_bad_params conn
+      {:ok, nil} -> send_400_bad_params conn
       {:ok, user} ->
         Logger.debug "Updated user: #{user.id}"
         create_channel conn, user
@@ -21,12 +19,10 @@ defmodule Epchat.Controllers.Channels do
   def create(conn, %{"nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname}"
     case Db.Users.create nickname do
+      {:error, :bad_params} -> send_400_bad_params conn
       {:error, reason} ->
         send_500_internal_error conn, reason, "Cannot create user"
-      :param_error ->
-        send_400_bad_params conn
-      {:ok, nil} ->
-        send_400_bad_params conn
+      {:ok, nil} -> send_400_bad_params conn
       {:ok, user} ->
         Logger.debug "Created user: #{user.id}"
         create_channel conn, user
@@ -42,12 +38,10 @@ defmodule Epchat.Controllers.Channels do
   def join(conn, %{"channel_id" => channel_id, "user_id" => user_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname} - UserId: #{user_id}"
     case Epchat.Db.Users.create_or_update user_id, nickname do
+      {:error, :bad_params} -> send_400_bad_params conn
       {:error, reason} ->
         send_500_internal_error conn, reason, "Cannot update user"
-      :param_error ->
-        send_400_bad_params conn
-      {:ok, nil} ->
-        send_400_bad_params conn
+      {:ok, nil} -> send_400_bad_params conn
       {:ok, user} ->
         Logger.debug "Updated user: #{user.id}"
         join_channel conn, channel_id, user
@@ -57,12 +51,10 @@ defmodule Epchat.Controllers.Channels do
   def join(conn, %{"channel_id" => channel_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname}"
     case Epchat.Db.Users.create nickname do
+      {:error, :bad_params} -> send_400_bad_params conn
       {:error, reason} ->
         send_500_internal_error conn, reason, "Cannot update user"
-      :param_error ->
-        send_400_bad_params conn
-      {:ok, nil} ->
-        send_400_bad_params conn
+      {:ok, nil} -> send_400_bad_params conn
       {:ok, user} ->
         Logger.debug "Updated user: #{user.id}"
         join_channel conn, channel_id, user
