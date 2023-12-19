@@ -14,27 +14,37 @@ defmodule Epchat.Channels do
         case Db.Memberships.create channel, user, pid do
           {:error, reason} -> {:error, reason}
           {:ok, nil} -> {:error, :membership_not_created}
-          {:ok, _membership} ->
-            # TODO: -------------------------------Duplicate-Code------ REF-01
-            msg = %{
-              user: %{id: user.id, nickname: user.nickname},
-            }
-            {:ok, msg}
-            # ------------------------------------------------------- / REF-01
+          {:ok, _membership} -> do_join channel, user, pid
         end
 
       {:ok, channel, user, _membership} ->
         case Db.Memberships.update_pid channel.id, user.id, pid do
           {:error, reason} -> {:error, reason}
           {:ok, nil} -> {:error, :membership_not_exists}
-          {:ok, _membership} ->
-            msg = %{
-            # TODO: -------------------------------Duplicate-Code------ REF-01
-              user: %{id: user.id, nickname: user.nickname},
-            }
-            {:ok, msg}
-            # ------------------------------------------------------- / REF-01
+          {:ok, _membership} -> do_join channel, user, pid
         end
+    end
+  end
+
+  def do_join(channel, user, pid) do
+    case Db.Memberships.all_members channel.id do
+      {:error, reason} -> {:error, reason}
+      {:ok, members} ->
+        bmsg = %{
+          member: %{id: user.id, nickname: user.nickname},
+        }
+
+        broadcast channel, members, :ch_member_join, bmsg, pid
+
+        members_without_pid = Enum.map(members, fn(m) ->
+          %{id: id, nickname: nickname} = m
+          %{id: id, nickname: nickname}
+        end)
+
+        msg = %{
+          members: members_without_pid,
+        }
+        {:ok, msg}
     end
   end
 
@@ -90,4 +100,26 @@ defmodule Epchat.Channels do
         end
     end
   end
+
+  # -----
+
+  def broadcast(channel, members, event, msg, from) do
+    data = %{
+      channel_id: channel.id,
+      event: event,
+      data: msg,
+    }
+    {_, json} = Jason.encode_to_iodata data    # TODO: Handle encoding error
+    for %{pid: spid} <- members do
+      pid = Epchat.Utils.string_to_pid spid
+      if from == nil or pid != from do
+        send pid, {:push, :text, json}     # TODO: Check if process is still alive
+      end
+    end
+  end
+
+  def broadcast(channel, members, event, msg) do
+    broadcast channel, members, event, msg, nil
+  end
+
 end
