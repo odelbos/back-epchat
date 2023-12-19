@@ -57,6 +57,13 @@ defmodule Epchat.ChannelHandler do
     end
   end
 
+  def event(channel_id, "ch_msg", %{msg: msg} = _data, state) do
+    case Channels.message channel_id, state.user_id, msg do
+      :ok -> {:ok, state}
+      error -> reply_error channel_id, error, state
+    end
+  end
+
   # -----
 
   defp reply(channel_id, event, msg, state) do

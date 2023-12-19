@@ -45,6 +45,8 @@ defmodule Epchat.Channels do
     end
   end
 
+  # -----
+
   def members(channel_id, user_id) do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
@@ -68,6 +70,35 @@ defmodule Epchat.Channels do
     end
   end
 
+  # -----
+
+  def message(channel_id, user_id, msg) do
+    case get_channel_and_user channel_id, user_id, true do
+      {:error, reason} -> {:error, reason}
+      {:not_found, reason} -> {:not_found, reason}
+      {:not_member, _, _} -> {:not_member, :not_member}
+
+      {:ok, channel, user, _membership} ->
+        case Db.Memberships.all_members channel_id do
+          {:error, reason} -> {:error, reason}
+
+          {:ok, members} ->
+            data = %{
+              from: %{id: user_id, nickname: user.nickname},
+              msg: msg,
+              at: :os.system_time(:second),
+            }
+            #
+            # TODO: Do not broadcast the msg to the sender
+            #
+            broadcast channel, members, :ch_msg, data
+            #
+            # TODO: Update channel activity
+            #
+            :ok
+        end
+    end
+  end
 
   # -------------------------------------------------
   # Private
@@ -118,5 +149,4 @@ defmodule Epchat.Channels do
   def broadcast(channel, members, event, msg) do
     broadcast channel, members, event, msg, nil
   end
-
 end
