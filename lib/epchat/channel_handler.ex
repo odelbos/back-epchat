@@ -42,17 +42,7 @@ defmodule Epchat.ChannelHandler do
     case Channels.join channel_id, state.user_id, self() do
       {:ok, msg} ->
         new_state = Map.put(state, :channels, [channel_id | state.channels])
-
-        # TODO: -----------------------------Duplicate-Code----- REF-020
-        data = %{
-          channel_id: channel_id,
-          event: "ch_joined",
-          data: msg,
-        }
-        # TODO: Hendle json encoding error
-        {_, json} = Jason.encode_to_iodata data
-        {:reply, :ok, {:text, json}, new_state}
-        # ----------------------------------------------------- / REF-020
+        reply channel_id, :ch_joined, msg, new_state
 
       {:error, _reason} ->
         # TODO: -----------------------------Duplicate-Code----- REF-020
@@ -73,16 +63,7 @@ defmodule Epchat.ChannelHandler do
   def event(channel_id, "ch_members", _data, state) do
     case Channels.members channel_id, state.user_id do
       {:ok, msg} ->
-        # TODO: -----------------------------Duplicate-Code----- REF-020
-        data = %{
-          channel_id: channel_id,
-          event: "ch_members",
-          data: msg,
-        }
-        # TODO: Hendle json encoding error
-        {_, json} = Jason.encode_to_iodata data
-        {:reply, :ok, {:text, json}, state}
-        # ----------------------------------------------------- / REF-020
+        reply channel_id, :ch_members, msg, state
 
       {:error, _reason} ->
         # TODO: -----------------------------Duplicate-Code----- REF-020
@@ -98,5 +79,18 @@ defmodule Epchat.ChannelHandler do
         {:reply, :ok, {:text, json}, state}
         # ----------------------------------------------------- / REF-020
     end
+  end
+
+  # -----
+
+  defp reply(channel_id, event, msg, state) do
+    data = %{
+      channel_id: channel_id,
+      event: event,
+      data: msg,
+    }
+    # TODO: Hendle json encoding error
+    {_, json} = Jason.encode_to_iodata data
+    {:reply, :ok, {:text, json}, state}
   end
 end
