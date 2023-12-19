@@ -21,6 +21,8 @@ defmodule Epchat.ApiRouter do
   end
 
   post "/channels/create" do
+    # TODO: --------------------------------------Duplicate-Code------ REF-30
+    # Make a create_or_update_user() function to delete the duplicate code
     case conn.body_params do
       %{"user_id" => uid, "nickname" => nickname} ->
         Logger.debug "Nickname: #{nickname} - UserId: #{uid}"
@@ -51,6 +53,43 @@ defmodule Epchat.ApiRouter do
       _ ->
         send_400_bad_params conn
     end
+    # ---------------------------------------------------------------- REF-30
+  end
+
+  post "/channels/join" do
+    # TODO: --------------------------------------Duplicate-Code------ REF-30
+    # Make a create_or_update_user() function to delete the duplicate code
+    case conn.body_params do
+      %{"channel_id" => channel_id, "user_id" => uid, "nickname" => nickname} ->
+        Logger.debug "Nickname: #{nickname} - UserId: #{uid}"
+        case Epchat.Db.Users.update uid, nickname do
+          {:error, _reason} ->
+            send_500_internal_error conn, "Cannot update user"
+          :param_error ->
+            send_400_bad_params conn
+          # TODO: This case is not managed correctly
+          # {:ok, nil} ->
+          #   :error
+          {:ok, user} ->
+            Logger.debug "Updated user: #{user.id}"
+            join_channel conn, channel_id, user
+        end
+
+      %{"channel_id" => channel_id, "nickname" => nickname} ->
+        Logger.debug "Nickname: #{nickname}"
+        case Epchat.Db.Users.create nickname do
+          {:error, _reason} ->
+            send_500_internal_error conn, "Cannot create user"
+          :param_error ->
+            send_400_bad_params conn
+          {:ok, user} ->
+            Logger.debug "Created user: #{user.id}"
+            join_channel conn, channel_id, user
+        end
+      _ ->
+        send_400_bad_params conn
+    end
+    # ---------------------------------------------------------------- REF-30
   end
 
   match _ do
@@ -64,11 +103,35 @@ defmodule Epchat.ApiRouter do
   defp create_channel(conn, user) do
     case Epchat.Db.Channels.create user do
       {:error, _reason} ->
-        send_500_internal_error conn, "Cannot create channel"
+        send_500_internal_error conn, "Internal Server Error"
       {:ok, nil} ->
         send_500_internal_error conn, "Cannot create channel"
       {:ok, channel} ->
-        Logger.debug "Created channel: #{channel.id}"
+        Logger.debug "Created channel: #{channel.id} - User: #{user.id}"
+        data = %{
+          status: 200,
+          user: %{
+            id: user.id,
+            nickname: user.nickname,
+          },
+          channel: %{
+            id: channel.id,
+            owner_id: channel.owner_id,
+            members: [],
+          }
+        }
+        send_with_status conn, 200, data
+    end
+  end
+
+  defp join_channel(conn, channel_id, user) do
+    case Epchat.Db.Channels.get channel_id do
+      {:error, _reason} ->
+        send_500_internal_error conn, "Internal Server Error"
+      {:ok, nil} ->
+        send_400_bad_params conn           # Channel does not exists
+      {:ok, channel} ->
+        Logger.debug "Join channel: #{channel.id} - User: #{user.id}"
         data = %{
           status: 200,
           user: %{
