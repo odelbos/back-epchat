@@ -25,6 +25,16 @@ defmodule Epchat.Db.Users do
     end
   end
 
+  def create_or_update(user_id, nickname) do
+    case get user_id do
+      {:error, reason} -> {:error, reason}
+      {:ok, nil} ->
+        create nickname
+      {:ok, _user} ->
+        update user_id, nickname
+    end
+  end
+
   def get(id) do
     query = """
       SELECT id, nickname FROM 'users' WHERE id=?; 

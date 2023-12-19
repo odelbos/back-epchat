@@ -1,6 +1,7 @@
 defmodule Epchat.ApiRouter do
   require Logger
   use Plug.Router
+  alias Epchat.Controllers
 
   plug Plug.Logger
   plug :match
@@ -21,151 +22,14 @@ defmodule Epchat.ApiRouter do
   end
 
   post "/channels/create" do
-    # TODO: --------------------------------------Duplicate-Code------ REF-30
-    # Make a create_or_update_user() function to delete the duplicate code
-    case conn.body_params do
-      %{"user_id" => uid, "nickname" => nickname} ->
-        Logger.debug "Nickname: #{nickname} - UserId: #{uid}"
-        case Epchat.Db.Users.update uid, nickname do
-          {:error, _reason} ->
-            send_500_internal_error conn, "Cannot update user"
-          :param_error ->
-            send_400_bad_params conn
-          # TODO: This case is not managed correctly
-          # {:ok, nil} ->
-          #   :error
-          {:ok, user} ->
-            Logger.debug "Updated user: #{user.id}"
-            create_channel conn, user
-        end
-
-      %{"nickname" => nickname} ->
-        Logger.debug "Nickname: #{nickname}"
-        case Epchat.Db.Users.create nickname do
-          {:error, _reason} ->
-            send_500_internal_error conn, "Cannot create user"
-          :param_error ->
-            send_400_bad_params conn
-          {:ok, user} ->
-            Logger.debug "Created user: #{user.id}"
-            create_channel conn, user
-        end
-      _ ->
-        send_400_bad_params conn
-    end
-    # ---------------------------------------------------------------- REF-30
+    Controllers.Channels.create conn, conn.body_params
   end
 
   post "/channels/join" do
-    # TODO: --------------------------------------Duplicate-Code------ REF-30
-    # Make a create_or_update_user() function to delete the duplicate code
-    case conn.body_params do
-      %{"channel_id" => channel_id, "user_id" => uid, "nickname" => nickname} ->
-        Logger.debug "Nickname: #{nickname} - UserId: #{uid}"
-        case Epchat.Db.Users.update uid, nickname do
-          {:error, _reason} ->
-            send_500_internal_error conn, "Cannot update user"
-          :param_error ->
-            send_400_bad_params conn
-          # TODO: This case is not managed correctly
-          # {:ok, nil} ->
-          #   :error
-          {:ok, user} ->
-            Logger.debug "Updated user: #{user.id}"
-            join_channel conn, channel_id, user
-        end
-
-      %{"channel_id" => channel_id, "nickname" => nickname} ->
-        Logger.debug "Nickname: #{nickname}"
-        case Epchat.Db.Users.create nickname do
-          {:error, _reason} ->
-            send_500_internal_error conn, "Cannot create user"
-          :param_error ->
-            send_400_bad_params conn
-          {:ok, user} ->
-            Logger.debug "Created user: #{user.id}"
-            join_channel conn, channel_id, user
-        end
-      _ ->
-        send_400_bad_params conn
-    end
-    # ---------------------------------------------------------------- REF-30
+    Controllers.Channels.join conn, conn.body_params
   end
 
   match _ do
     send_resp(conn, 404, "not found")
   end
-
-
-  # -------------------------------------------------------------
-  # Private
-  # -------------------------------------------------------------
-  defp create_channel(conn, user) do
-    case Epchat.Db.Channels.create user do
-      {:error, _reason} ->
-        send_500_internal_error conn, "Internal Server Error"
-      {:ok, nil} ->
-        send_500_internal_error conn, "Cannot create channel"
-      {:ok, channel} ->
-        Logger.debug "Created channel: #{channel.id} - User: #{user.id}"
-        data = %{
-          status: 200,
-          user: %{
-            id: user.id,
-            nickname: user.nickname,
-          },
-          channel: %{
-            id: channel.id,
-            owner_id: channel.owner_id,
-            members: [],
-          }
-        }
-        send_with_status conn, 200, data
-    end
-  end
-
-  defp join_channel(conn, channel_id, user) do
-    case Epchat.Db.Channels.get channel_id do
-      {:error, _reason} ->
-        send_500_internal_error conn, "Internal Server Error"
-      {:ok, nil} ->
-        send_400_bad_params conn           # Channel does not exists
-      {:ok, channel} ->
-        Logger.debug "Join channel: #{channel.id} - User: #{user.id}"
-        data = %{
-          status: 200,
-          user: %{
-            id: user.id,
-            nickname: user.nickname,
-          },
-          channel: %{
-            id: channel.id,
-            owner_id: channel.owner_id,
-            members: [],
-          }
-        }
-        send_with_status conn, 200, data
-    end
-  end
-
-  # -----
-
-  defp send_with_status(conn, status, data) do
-    conn
-    |> put_resp_header("Access-Control-Allow-Origin", "*")
-    |> put_resp_header("Content_Type", "application/json;charset=UTF-8")
-    |> send_resp(status, Jason.encode! data)
-  end
-
-  defp send_500_internal_error(conn, msg) do
-    Logger.debug msg
-    send_with_status conn, 500, %{status: 500, msg: msg}
-  end
-
-  defp send_400_bad_params(conn) do
-    Logger.debug "Error, bad or missing parameter"
-    data = %{status: 400, msg: "Error, bad or missing parameter"}
-    send_with_status conn, 400, data
-  end
 end
-
