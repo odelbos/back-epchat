@@ -7,7 +7,7 @@ defmodule Epchat.Db.Channels do
     query = """
       INSERT INTO 'channels' (id, owner_id, last_activity_at) VALUES (?, ?, ?); 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-001
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-001
     # TODO: Check that id does not already exists
     conf = Application.fetch_env! :epchat, :db
     id = Epchat.Utils.generate_b62 conf.ids_length
@@ -24,7 +24,7 @@ defmodule Epchat.Db.Channels do
     query = """
       SELECT id, owner_id, last_activity_at FROM 'channels' WHERE id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-002
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
       {:ok, [], _} -> {:ok, nil}
       {:ok, rows, fields} ->
@@ -41,7 +41,7 @@ defmodule Epchat.Db.Channels do
     query = """
       SELECT id, owner_id, last_activity_at FROM 'channels'; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-003
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query do
       {:ok, [], _} -> {:ok, []}
       {:ok, rows, fields} ->
@@ -57,7 +57,7 @@ defmodule Epchat.Db.Channels do
     query = """
       UPDATE 'channels' SET last_activity_at=? WHERE id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-004
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-004
     case Db.execute query, [:os.system_time(:second), id] do
       {:ok, [], []} -> get id
       {:error, reason} ->
@@ -66,4 +66,24 @@ defmodule Epchat.Db.Channels do
     end
     # ------------------------------------------------------------- / DUP-004
   end
+
+  # -----
+
+  def delete(id) do
+    query = """
+      DELETE FROM 'channels' WHERE id=?; 
+    """
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-005
+    case Db.execute query, [id] do
+      # TODO: Duplicate code, start: DUP-003
+      {:ok, [], _} -> :ok
+      {:error, reason} ->
+        Logger.debug "Cannot delete channel, reason: #{reason}"
+        {:error, reason}
+    # ------------------------------------------------------------- / DUP-005
+    end
+  end
+
+
+
 end
