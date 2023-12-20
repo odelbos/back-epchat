@@ -78,4 +78,18 @@ defmodule Epchat.Db.Memberships do
     end
     # ------------------------------------------------------------- / DUP-003
   end
+
+  # -----
+
+  def delete_member(channel_id, user_id) do
+    query = """
+      DELETE FROM 'memberships' WHERE channel_id=? AND user_id=?; 
+    """
+    case Db.execute query, [channel_id, user_id] do
+      {:ok, [], _} -> :ok
+      {:error, reason} ->
+        Logger.debug "Cannot delete membership, reason: #{reason}"
+        {:error, reason}
+    end
+  end
 end
