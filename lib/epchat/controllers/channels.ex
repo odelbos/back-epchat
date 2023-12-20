@@ -89,6 +89,11 @@ defmodule Epchat.Controllers.Channels do
             members: [],
           }
         }
+
+        #
+        # TODO: Start monitoring the channel
+        #
+
         send_with_status conn, 200, data
     end
   end
