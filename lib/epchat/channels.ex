@@ -23,7 +23,7 @@ defmodule Epchat.Channels do
     end
   end
 
-  def do_join(channel, user, pid) do
+  defp do_join(channel, user, pid) do
     case Db.Memberships.all_members channel.id do
       {:error, reason} -> {:error, reason}
       {:ok, members} ->
