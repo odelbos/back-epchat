@@ -12,11 +12,18 @@ defmodule Epchat.ChannelHandler do
     {:ok, Map.put(state, :user_id, user_id)}
   end
 
+  # Remove closed channel from the state
+  # NOTE: Closing a channel does not mean closing the websocket
+  def handle_info({:channel_closed, channel_id}, state) do
+    channels = Enum.filter(state.channels, fn c -> c != channel_id end)
+    {:ok, Map.put(state, :channels, channels)}
+  end
+  
   # Push a msg from server to client
   def handle_info({:push, _opcode, msg}, state) do
     {:reply, :ok, {:text, msg}, state}
   end
-  
+
   # -----
 
   def handle_in({"sk_ping", [opcode: :text]}, state) do

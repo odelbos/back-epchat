@@ -110,6 +110,7 @@ defmodule Epchat.Channels do
 
       {:ok, channel, user, membership} ->
         do_leave channel, user, membership
+        Logger.debug "User #{user.id} left channel: #{channel.id}"
         #
         # TODO: What if now there isn't anymore channel member?
         #
@@ -132,6 +133,64 @@ defmodule Epchat.Channels do
             broadcast channel, members, :ch_member_leave, msg
             :ok
         end
+    end
+  end
+
+  # -----
+
+  def close(channel_id, reason) do
+    case Db.Channels.get channel_id do
+      {:ok, nil} -> :ok
+      {:error, reason} -> {:error, reason}
+      {:ok, channel} -> do_close channel, reason
+    end
+  end
+
+  defp do_close(channel, reason) do
+    case Db.Memberships.all_members channel.id do
+      {:error, reason} -> {:error, reason}
+
+      {:ok, []} ->
+        #
+        # TODO: Normally this case should never happens?
+        #
+        #
+        # TODO: Stop channel monitoring the channel
+        #
+        case Db.Channels.delete channel.id do
+          :ok -> :ok
+          _ -> Logger.debug "Cannot delete channel, id: #{channel.id}"
+        end
+        :ok
+
+      {:ok, members} ->
+        # For all members, remove the channel from the state of the websocket handler
+        for %{pid: spid} <- members do
+          pid = Epchat.Utils.string_to_pid spid
+          send pid, {:channel_closed, channel.id}
+        end
+
+        # Broadcast to all members that the channel is closed
+        broadcast channel, members, :ch_closed, %{reason: reason}
+
+        #
+        # TODO: Stop channel monitoring the channel
+        #
+
+        # Clean up database
+        case Db.Memberships.delete_all_members channel.id do
+          :ok -> :ok
+          _ ->
+            Logger.debug "Cannot delete all channel members, id: #{channel.id}"
+        end
+        case Db.Channels.delete channel.id do
+          :ok -> :ok
+          _ ->
+            Logger.debug "Cannot delete channel, id: #{channel.id}"
+        end
+
+        Logger.debug "Channel closed, id: #{channel.id}"
+        :ok
     end
   end
 
