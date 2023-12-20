@@ -100,6 +100,42 @@ defmodule Epchat.Channels do
     end
   end
 
+  # -----
+
+  def leave(channel_id, user_id) do
+    case get_channel_and_user channel_id, user_id, true do
+      {:error, reason} -> {:error, reason}
+      {:not_found, reason} -> {:not_found, reason}
+      {:not_member, _, _} -> {:not_member, :not_member}
+
+      {:ok, channel, user, membership} ->
+        do_leave channel, user, membership
+        #
+        # TODO: What if now there isn't anymore channel member?
+        #
+    end
+  end
+
+  defp do_leave(channel, user, _membership) do
+    case Db.Memberships.delete_member channel.id, user.id do
+      {:error, reason} -> {:error, reason}
+
+      :ok ->
+        # Broadcast to all channel members a ch_member_leave event
+        case Db.Memberships.all_members channel.id do
+          {:error, reason} -> {:error, reason}
+          {:ok, []} -> :ok
+          {:ok, members} ->
+            msg = %{
+              user: %{id: user.id, nickname: user.nickname},
+            }
+            broadcast channel, members, :ch_member_leave, msg
+            :ok
+        end
+    end
+  end
+
+
   # -------------------------------------------------
   # Private
   # -------------------------------------------------
