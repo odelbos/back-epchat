@@ -25,7 +25,7 @@ defmodule Epchat.Router do
         case Epchat.Db.Users.get user_id do
           {:error, _reason} ->
             send_resp conn, 500, "Internal Error"
-          nil ->
+          {:ok, nil} ->
             send_resp conn, 400, "Error: Bad or missing parameters"
           {:ok, user} ->
             result =
