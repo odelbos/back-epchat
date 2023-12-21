@@ -48,13 +48,19 @@ defmodule Epchat.Channels.Monitor do
     end
   end
 
-  def handle_info(:health, state) do
-    %{channel_id: channel_id, last_activity: last_activity} = state
-    now = :os.system_time :second
-    conf = Application.fetch_env! :epchat, :channels
-    if now > last_activity + conf.inactivity_limit do
-      Logger.debug "Channel #{channel_id} inactive since #{trunc(conf.inactivity_limit / 60)}mn"
-      Channels.Manager.close_channel channel_id, :ch_no_activity
+  def handle_info(:check_activity, state) do
+    case Db.Channels.get state.channel_id do
+      {:error, reason} ->
+        Logger.debug "Cannot get channel: #{state.channel_id} - #{reason}"
+      {:ok, nil} ->
+        Logger.debug "Cannot get channel: #{state.channel_id} - not found"
+      {:ok, channel} ->
+        now = :os.system_time :second
+        conf = Application.fetch_env! :epchat, :channels
+        if now > channel.last_activity_at + conf.inactivity_limit do
+          Logger.debug "Channel #{channel.id} inactive since #{trunc(conf.inactivity_limit / 60)}mn"
+          Channels.Manager.close_channel channel.id, :ch_no_activity
+        end
     end
     {:noreply, state}
   end
@@ -63,6 +69,6 @@ defmodule Epchat.Channels.Monitor do
 
   defp schedule() do
     # TODO: Move interval delay constant into config
-    :timer.send_interval 30_000, :health
+    :timer.send_interval 30_000, :check_activity
   end
 end
