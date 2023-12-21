@@ -5,7 +5,9 @@ import Config
 
 config :epchat,
   db: %{
-    file: "/.../.../epchat.sqlite",
-    # file: ":memory:",
+    file: ":memory:",
     ids_length: 15,
+  },
+  channels: %{
+    inactivity_limit: 600         # 10mn in sseconds
   }
