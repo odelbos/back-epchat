@@ -13,6 +13,9 @@ defmodule Epchat.Application do
     children = [
       {Bandit, plug: Epchat.Router},
       {Epchat.Db.Db, %{file: conf.file}},
+      {Epchat.Channels.Manager, []},
+      {Registry, [keys: :unique, name: :channels]},
+      Epchat.Channels.Supervisor,
     ]
 
     opts = [strategy: :one_for_one, name: Epchat.Supervisor]
