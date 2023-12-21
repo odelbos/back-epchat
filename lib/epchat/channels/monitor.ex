@@ -37,14 +37,12 @@ defmodule Epchat.Channels.Monitor do
   def handle_info(:update_activity, state) do
     case Db.Channels.update_last_activity_at state.channel_id do
       {:error, reason} ->
-        Logger.debug "Cannot update channel last last activity: #{state.channel_id} - #{reason}"
-        {:noreply, state}
+        Logger.debug "Cannot update channel last activity: #{state.channel_id} - #{reason}"
       {:ok, nil} ->
-        Logger.debug "Cannot update channel last last activity: #{state.channel_id} - not found"
-        {:noreply, state}
-      {:ok, channel} ->
-        {:noreply, Map.put(state, :last_activity, channel.last_activity_at)}
+        Logger.debug "Cannot update channel last activity: #{state.channel_id} - not found"
+      {:ok, _channel} -> :ok
     end
+    {:noreply, state}
   end
 
   def handle_info(:check_activity, state) do
