@@ -77,6 +77,10 @@ defmodule Epchat.Controllers.Channels do
         send_500_internal_error conn, "Bad params", "Cannot create channel"
       {:ok, channel} ->
         Logger.debug "Created channel: #{channel.id} - Owner: #{user.id}"
+
+        # Start monitoring the channel
+        Epchat.Channels.Manager.start_channel_monitor channel.id
+
         data = %{
           status: 200,
           user: %{
@@ -89,11 +93,6 @@ defmodule Epchat.Controllers.Channels do
             members: [],
           }
         }
-
-        #
-        # TODO: Start monitoring the channel
-        #
-
         send_with_status conn, 200, data
     end
   end
