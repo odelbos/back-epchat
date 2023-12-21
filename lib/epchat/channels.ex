@@ -139,6 +139,11 @@ defmodule Epchat.Channels do
 
   # -----
 
+  # NOTE: This function must not be call directly, to close a channel, we
+  # must use the manager: Channels.Manager.close_channel/2
+  #
+  # TODO: May be we should move this code the Channels.Manager module
+  #
   def close(channel_id, reason) do
     case Db.Channels.get channel_id do
       {:ok, nil} -> :ok
@@ -155,12 +160,9 @@ defmodule Epchat.Channels do
         #
         # TODO: Normally this case should never happens?
         #
-        #
-        # TODO: Stop channel monitoring the channel
-        #
         case Db.Channels.delete channel.id do
           :ok -> :ok
-          _ -> Logger.debug "Cannot delete channel, id: #{channel.id}"
+          _ -> Logger.debug "Cannot delete channel: #{channel.id}"
         end
         :ok
 
@@ -174,25 +176,42 @@ defmodule Epchat.Channels do
         # Broadcast to all members that the channel is closed
         broadcast channel, members, :ch_closed, %{reason: reason}
 
-        #
-        # TODO: Stop channel monitoring the channel
-        #
-
         # Clean up database
         case Db.Memberships.delete_all_members channel.id do
           :ok -> :ok
           _ ->
-            Logger.debug "Cannot delete all channel members, id: #{channel.id}"
+            Logger.debug "Cannot delete all channel members: #{channel.id}"
         end
         case Db.Channels.delete channel.id do
           :ok -> :ok
           _ ->
-            Logger.debug "Cannot delete channel, id: #{channel.id}"
+            Logger.debug "Cannot delete channel: #{channel.id}"
         end
 
-        Logger.debug "Channel closed, id: #{channel.id}"
+        Logger.debug "Channel closed: #{channel.id}"
         :ok
     end
+  end
+
+  # -----
+
+  def broadcast(channel, members, event, msg, from) do
+    data = %{
+      channel_id: channel.id,
+      event: event,
+      data: msg,
+    }
+    {_, json} = Jason.encode_to_iodata data    # TODO: Handle encoding error
+    for %{pid: spid} <- members do
+      pid = Epchat.Utils.string_to_pid spid
+      if from == nil or pid != from do
+        send pid, {:push, :text, json}     # TODO: Check if process is still alive
+      end
+    end
+  end
+
+  def broadcast(channel, members, event, msg) do
+    broadcast channel, members, event, msg, nil
   end
 
 
@@ -223,26 +242,5 @@ defmodule Epchat.Channels do
             {:ok, channel, user}
         end
     end
-  end
-
-  # -----
-
-  def broadcast(channel, members, event, msg, from) do
-    data = %{
-      channel_id: channel.id,
-      event: event,
-      data: msg,
-    }
-    {_, json} = Jason.encode_to_iodata data    # TODO: Handle encoding error
-    for %{pid: spid} <- members do
-      pid = Epchat.Utils.string_to_pid spid
-      if from == nil or pid != from do
-        send pid, {:push, :text, json}     # TODO: Check if process is still alive
-      end
-    end
-  end
-
-  def broadcast(channel, members, event, msg) do
-    broadcast channel, members, event, msg, nil
   end
 end
