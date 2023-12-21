@@ -1,12 +1,12 @@
 defmodule Epchat.Channels.Monitor do
   require Logger
   use GenServer
+  alias Epchat.Db
   alias Epchat.Channels
 
   def start_link(channel_id) do
     name = {:via, Registry, {:channels, channel_id}}
-    state = %{channel_id: channel_id, last_activity: :os.system_time(:second)}
-    GenServer.start_link __MODULE__, state, name: name
+    GenServer.start_link __MODULE__, %{channel_id: channel_id}, name: name
   end
 
   def init(state) do
@@ -35,19 +35,31 @@ defmodule Epchat.Channels.Monitor do
   # -----
 
   def handle_info(:update_activity, state) do
-    #
-    # TODO: Update database channel.last_activity_at?
-    #
-    {:noreply, Map.put(state, :last_activity, :os.system_time(:second))}
+    case Db.Channels.update_last_activity_at state.channel_id do
+      {:error, reason} ->
+        Logger.debug "Cannot update channel last last activity: #{state.channel_id} - #{reason}"
+        {:noreply, state}
+      {:ok, nil} ->
+        Logger.debug "Cannot update channel last last activity: #{state.channel_id} - not found"
+        {:noreply, state}
+      {:ok, channel} ->
+        {:noreply, Map.put(state, :last_activity, channel.last_activity_at)}
+    end
   end
 
-  def handle_info(:health, state) do
-    %{channel_id: channel_id, last_activity: last_activity} = state
-    now = :os.system_time :second
-    conf = Application.fetch_env! :epchat, :channels
-    if now > last_activity + conf.inactivity_limit do
-      Logger.debug "Channel #{channel_id} inactive since #{trunc(conf.inactivity_limit / 60)}mn"
-      Channels.Manager.close_channel channel_id, :ch_no_activity
+  def handle_info(:check_activity, state) do
+    case Db.Channels.get state.channel_id do
+      {:error, reason} ->
+        Logger.debug "Cannot get channel: #{state.channel_id} - #{reason}"
+      {:ok, nil} ->
+        Logger.debug "Cannot get channel: #{state.channel_id} - not found"
+      {:ok, channel} ->
+        now = :os.system_time :second
+        conf = Application.fetch_env! :epchat, :channels
+        if now > channel.last_activity_at + conf.inactivity_limit do
+          Logger.debug "Channel #{channel.id} inactive since #{trunc(conf.inactivity_limit / 60)}mn"
+          Channels.Manager.close_channel channel.id, :ch_no_activity
+        end
     end
     {:noreply, state}
   end
@@ -56,6 +68,6 @@ defmodule Epchat.Channels.Monitor do
 
   defp schedule() do
     # TODO: Move interval delay constant into config
-    :timer.send_interval 30_000, :health
+    :timer.send_interval 30_000, :check_activity
   end
 end
