@@ -139,62 +139,6 @@ defmodule Epchat.Channels do
 
   # -----
 
-  # NOTE: This function must not be call directly, to close a channel, we
-  # must use the manager: Channels.Manager.close_channel/2
-  #
-  # TODO: May be we should move this code the Channels.Manager module
-  #
-  def close(channel_id, reason) do
-    case Db.Channels.get channel_id do
-      {:ok, nil} -> :ok
-      {:error, reason} -> {:error, reason}
-      {:ok, channel} -> do_close channel, reason
-    end
-  end
-
-  defp do_close(channel, reason) do
-    case Db.Memberships.all_members channel.id do
-      {:error, reason} -> {:error, reason}
-
-      {:ok, []} ->
-        #
-        # TODO: Normally this case should never happens?
-        #
-        case Db.Channels.delete channel.id do
-          :ok -> :ok
-          _ -> Logger.debug "Cannot delete channel: #{channel.id}"
-        end
-        :ok
-
-      {:ok, members} ->
-        # For all members, remove the channel from the state of the websocket handler
-        for %{pid: spid} <- members do
-          pid = Epchat.Utils.string_to_pid spid
-          send pid, {:channel_closed, channel.id}
-        end
-
-        # Broadcast to all members that the channel is closed
-        broadcast channel, members, :ch_closed, %{reason: reason}
-
-        # Clean up database
-        case Db.Memberships.delete_all_members channel.id do
-          :ok -> :ok
-          _ ->
-            Logger.debug "Cannot delete all channel members: #{channel.id}"
-        end
-        case Db.Channels.delete channel.id do
-          :ok -> :ok
-          _ ->
-            Logger.debug "Cannot delete channel: #{channel.id}"
-        end
-
-        Logger.debug "Channel closed: #{channel.id}"
-        :ok
-    end
-  end
-
-  # -----
-
   def broadcast(channel, members, event, msg, from) do
     data = %{
       channel_id: channel.id,
