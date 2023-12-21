@@ -149,7 +149,10 @@ defmodule Epchat.Channels do
     for %{pid: spid} <- members do
       pid = Epchat.Utils.string_to_pid spid
       if from == nil or pid != from do
-        send pid, {:push, :text, json}     # TODO: Check if process is still alive
+        # TODO: Explore using a Registry instead of saving pid in db
+        if Process.alive? pid do
+          send pid, {:push, :text, json}
+        end
       end
     end
   end
