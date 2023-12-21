@@ -1,6 +1,7 @@
 defmodule Epchat.Channels do
   require Logger
   alias Epchat.Db
+  alias Epchat.Channels
 
   def join(channel_id, user_id, pid) do
     case get_channel_and_user channel_id, user_id, true do
@@ -88,13 +89,13 @@ defmodule Epchat.Channels do
               msg: msg,
               at: :os.system_time(:second),
             }
-            #
-            # TODO: Do not broadcast the msg to the sender
-            #
+
+            # Update channel activity
+            Channels.Manager.update_channel_activity channel_id
+
+            # TODO: Do not broadcast the msg to the sender?
             broadcast channel, members, :ch_msg, data
-            #
-            # TODO: Update channel activity
-            #
+
             :ok
         end
     end
