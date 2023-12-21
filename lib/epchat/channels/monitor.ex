@@ -6,8 +6,7 @@ defmodule Epchat.Channels.Monitor do
 
   def start_link(channel_id) do
     name = {:via, Registry, {:channels, channel_id}}
-    state = %{channel_id: channel_id, last_activity: :os.system_time(:second)}
-    GenServer.start_link __MODULE__, state, name: name
+    GenServer.start_link __MODULE__, %{channel_id: channel_id}, name: name
   end
 
   def init(state) do
