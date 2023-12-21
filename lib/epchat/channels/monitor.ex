@@ -35,6 +35,9 @@ defmodule Epchat.Channels.Monitor do
   # -----
 
   def handle_info(:update_activity, state) do
+    #
+    # TODO: Update database channel.last_activity_at?
+    #
     {:noreply, Map.put(state, :last_activity, :os.system_time(:second))}
   end
 
