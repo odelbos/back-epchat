@@ -1,4 +1,4 @@
-defmodule Epchat.ChannelHandler do
+defmodule Epchat.Channels.Handler do
   alias Epchat.Channels
 
   def init(_args) do

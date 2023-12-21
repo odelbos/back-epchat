@@ -30,7 +30,7 @@ defmodule Epchat.Router do
           {:ok, user} ->
             result =
               conn
-              |> WebSockAdapter.upgrade(Epchat.ChannelHandler, [], timeout: 60_000)
+              |> WebSockAdapter.upgrade(Epchat.Channels.Handler, [], timeout: 60_000)
 
             # Link the user_id with the websocket handler process.
             send result.owner, {:user_id, user.id}
