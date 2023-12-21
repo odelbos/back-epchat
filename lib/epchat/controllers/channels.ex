@@ -2,6 +2,7 @@ defmodule Epchat.Controllers.Channels do
   require Logger
   import Plug.Conn
   alias Epchat.Db
+  alias Epchat.Channels
 
   def create(conn, %{"user_id" => user_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname} - UserId: #{user_id}"
@@ -69,18 +70,14 @@ defmodule Epchat.Controllers.Channels do
   # -------------------------------------------------------------
   # Private
   # -------------------------------------------------------------
+
   defp create_channel(conn, user) do
-    case Db.Channels.create user do
+    case Channels.Manager.create_channel user do
       {:error, reason} ->
         send_500_internal_error conn, reason, "Internal Server Error"
       {:ok, nil} ->
         send_500_internal_error conn, "Bad params", "Cannot create channel"
       {:ok, channel} ->
-        Logger.debug "Created channel: #{channel.id} - Owner: #{user.id}"
-
-        # Start monitoring the channel
-        Epchat.Channels.Manager.start_channel_monitor channel.id
-
         data = %{
           status: 200,
           user: %{

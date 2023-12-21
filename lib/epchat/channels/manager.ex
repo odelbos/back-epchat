@@ -1,6 +1,7 @@
 defmodule Epchat.Channels.Manager do
   require Logger
   use GenServer
+  alias Epchat.Db
   alias Epchat.Channels
 
   def start_link(_arg) do
@@ -13,19 +14,19 @@ defmodule Epchat.Channels.Manager do
 
   # -----
 
-  def close_channel(channel_id, reason) do
-    GenServer.cast __MODULE__, {:close_channel, channel_id, reason}
+  def create_channel(user) do
+    case Db.Channels.create user do
+      {:error, reason} -> {:error, reason}
+      {:ok, nil} -> {:ok, nil}
+      {:ok, channel} ->
+        Logger.debug "Created channel: #{channel.id} - Owner: #{user.id}"
+        start_channel_monitor channel.id
+        {:ok, channel}
+    end
   end
 
-  def start_channel_monitor(channel_id) do
-    case Channels.Supervisor.start_channel_monitor channel_id do
-      {:ok, _pid} ->
-        Logger.debug "Started monitoring channel: #{channel_id}"
-        :ok
-      {:error, error} ->
-        Logger.debug "Cannot start monitoring channel: #{channel_id} - #{error}"
-        :error
-    end
+  def close_channel(channel_id, reason) do
+    GenServer.cast __MODULE__, {:close_channel, channel_id, reason}
   end
 
   def update_channel_activity(channel_id) do
@@ -48,7 +49,21 @@ defmodule Epchat.Channels.Manager do
     {:noreply, state}
   end
 
-  # -----
+
+  # ---------------------------------------------------------
+  # Private
+  # ---------------------------------------------------------
+
+  defp start_channel_monitor(channel_id) do
+    case Channels.Supervisor.start_channel_monitor channel_id do
+      {:ok, _pid} ->
+        Logger.debug "Started monitoring channel: #{channel_id}"
+        :ok
+      {:error, error} ->
+        Logger.debug "Cannot start monitoring channel: #{channel_id} - #{error}"
+        :error
+    end
+  end
 
   defp stop_channel_monitor(channel_id) do
     case lookup_channel_monitor channel_id do
