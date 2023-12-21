@@ -1,6 +1,7 @@
 defmodule Epchat.Channels.Monitor do
   require Logger
   use GenServer
+  alias Epchat.Db
   alias Epchat.Channels
 
   def start_link(channel_id) do
@@ -35,10 +36,16 @@ defmodule Epchat.Channels.Monitor do
   # -----
 
   def handle_info(:update_activity, state) do
-    #
-    # TODO: Update database channel.last_activity_at?
-    #
-    {:noreply, Map.put(state, :last_activity, :os.system_time(:second))}
+    case Db.Channels.update_last_activity_at state.channel_id do
+      {:error, reason} ->
+        Logger.debug "Cannot update channel last last activity: #{state.channel_id} - #{reason}"
+        {:noreply, state}
+      {:ok, nil} ->
+        Logger.debug "Cannot update channel last last activity: #{state.channel_id} - not found"
+        {:noreply, state}
+      {:ok, channel} ->
+        {:noreply, Map.put(state, :last_activity, channel.last_activity_at)}
+    end
   end
 
   def handle_info(:health, state) do
