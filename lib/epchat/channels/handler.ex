@@ -50,7 +50,6 @@ defmodule Epchat.Channels.Handler do
       {:ok, msg} ->
         new_state = Map.put(state, :channels, [channel_id | state.channels])
         reply channel_id, :ch_joined, msg, new_state
-
       error -> reply_error channel_id, error, state
     end
   end
@@ -59,7 +58,6 @@ defmodule Epchat.Channels.Handler do
     case Channels.members channel_id, state.user_id do
       {:ok, msg} ->
         reply channel_id, :ch_members, msg, state
-
       error -> reply_error channel_id, error, state
     end
   end
