@@ -22,11 +22,11 @@ defmodule Epchat.ApiRouter do
   end
 
   post "/channels/create" do
-    Controllers.Channels.create conn, conn.body_params
+    Controllers.Channels.create conn
   end
 
   post "/channels/join" do
-    Controllers.Channels.join conn, conn.body_params
+    Controllers.Channels.join conn
   end
 
   match _ do

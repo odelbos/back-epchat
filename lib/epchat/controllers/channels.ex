@@ -4,7 +4,9 @@ defmodule Epchat.Controllers.Channels do
   alias Epchat.Db
   alias Epchat.Channels
 
-  def create(conn, %{"user_id" => user_id, "nickname" => nickname} = _params) do
+  def create(conn), do: do_create(conn, conn.body_params)
+
+  defp do_create(conn, %{"user_id" => user_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname} - UserId: #{user_id}"
     case Db.Users.create_or_update user_id, nickname do
       {:error, :bad_params} -> send_400_bad_params conn
@@ -17,7 +19,7 @@ defmodule Epchat.Controllers.Channels do
     end
   end
 
-  def create(conn, %{"nickname" => nickname} = _params) do
+  defp do_create(conn, %{"nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname}"
     case Db.Users.create nickname do
       {:error, :bad_params} -> send_400_bad_params conn
@@ -30,13 +32,15 @@ defmodule Epchat.Controllers.Channels do
     end
   end
 
-  def create(conn, _params) do
+  defp do_create(conn, _params) do
     send_400_bad_params conn
   end
 
   # -----
 
-  def join(conn, %{"channel_id" => channel_id, "user_id" => user_id, "nickname" => nickname} = _params) do
+  def join(conn), do: do_join(conn, conn.body_params)
+
+  defp do_join(conn, %{"channel_id" => channel_id, "user_id" => user_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname} - UserId: #{user_id}"
     case Epchat.Db.Users.create_or_update user_id, nickname do
       {:error, :bad_params} -> send_400_bad_params conn
@@ -49,7 +53,7 @@ defmodule Epchat.Controllers.Channels do
     end
   end
 
-  def join(conn, %{"channel_id" => channel_id, "nickname" => nickname} = _params) do
+  defp do_join(conn, %{"channel_id" => channel_id, "nickname" => nickname} = _params) do
     Logger.debug "Nickname: #{nickname}"
     case Epchat.Db.Users.create nickname do
       {:error, :bad_params} -> send_400_bad_params conn
@@ -62,7 +66,7 @@ defmodule Epchat.Controllers.Channels do
     end
   end
 
-  def join(conn, _params) do
+  defp do_join(conn, _params) do
     send_400_bad_params conn
   end
 
