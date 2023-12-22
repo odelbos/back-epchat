@@ -44,7 +44,6 @@ defmodule Epchat.Channels.Manager do
   # -----
 
   def handle_cast({:close_channel, channel_id, reason}, state) do
-    # Channels.close channel_id, reason
     close channel_id, reason
     stop_channel_monitor channel_id
     {:noreply, state}
