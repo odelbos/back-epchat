@@ -65,7 +65,7 @@ defmodule Epchat.Channels.Monitor do
   # -----
 
   defp schedule() do
-    # TODO: Move interval delay constant into config
-    :timer.send_interval 30_000, :check_activity
+    conf = Application.fetch_env! :epchat, :channels
+    :timer.send_interval (conf.inactivity_interval * 1000), :check_activity
   end
 end
