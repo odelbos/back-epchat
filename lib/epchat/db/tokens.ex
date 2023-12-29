@@ -26,7 +26,7 @@ defmodule Epchat.Db.Tokens do
 
   def get(id) do
     query = """
-      SELECT id, channel_id FROM 'tokens' WHERE id=?; 
+      SELECT id, channel_id, created_at FROM 'tokens' WHERE id=?; 
     """
     # -----------------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
