@@ -75,7 +75,6 @@ defmodule Epchat.Db.Channels do
     """
     # TODO: -----------------------------------Duplicate-Code-------- DUP-005
     case Db.execute query, [id] do
-      # TODO: Duplicate code, start: DUP-003
       {:ok, [], _} -> :ok
       {:error, reason} ->
         Logger.debug "Cannot delete channel, reason: #{reason}"
@@ -83,7 +82,4 @@ defmodule Epchat.Db.Channels do
     # ------------------------------------------------------------- / DUP-005
     end
   end
-
-
-
 end
