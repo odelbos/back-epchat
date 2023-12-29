@@ -40,12 +40,12 @@ defmodule Epchat.Channels.Handler do
   def handle_in({msg, [opcode: :text]}, state) do
     payload = Jason.decode! msg, keys: :atoms!
     %{channel_id: channel_id, event: event, data: data} = payload
-    event channel_id, event, data, state
+    event_in channel_id, event, data, state
   end
 
   # -----
 
-  def event(channel_id, "ch_join", _data, state) do
+  def event_in(channel_id, "ch_join", _data, state) do
     case Channels.join channel_id, state.user_id, self() do
       {:ok, msg} ->
         new_state = Map.put(state, :channels, [channel_id | state.channels])
@@ -54,7 +54,7 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
-  def event(channel_id, "ch_members", _data, state) do
+  def event_in(channel_id, "ch_members", _data, state) do
     case Channels.members channel_id, state.user_id do
       {:ok, msg} ->
         reply channel_id, :ch_members, msg, state
@@ -62,7 +62,7 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
-  def event(channel_id, "ch_msg", %{msg: msg} = _data, state) do
+  def event_in(channel_id, "ch_msg", %{msg: msg} = _data, state) do
     case Channels.message channel_id, state.user_id, msg do
       :ok -> {:ok, state}
       error -> reply_error channel_id, error, state
