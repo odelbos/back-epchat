@@ -6,6 +6,7 @@ defmodule Epchat.Db.Schema do
     create_users_table conn
     create_channels_table conn
     create_memberships_table conn
+    create_tokens_table conn
   end
 
   def create_users_table(conn) do
@@ -56,6 +57,23 @@ defmodule Epchat.Db.Schema do
       {:error, reason} ->
         Logger.debug "Cannot create 'memberships' table, reason: #{reason}"
         raise "Cannot create 'memberships' table"
+      _ -> :ok
+    end
+  end
+
+  def create_tokens_table(conn) do
+    query = """
+      CREATE TABLE IF NOT EXISTS tokens (
+          id text PRIMARY KEY,
+          channel_id TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (channel_id) REFERENCES channels (id)
+      );
+    """
+    case Db.query conn, query do
+      {:error, reason} ->
+        Logger.debug "Cannot create 'tokens' table, reason: #{reason}"
+        raise "Cannot create 'tokens' table"
       _ -> :ok
     end
   end
