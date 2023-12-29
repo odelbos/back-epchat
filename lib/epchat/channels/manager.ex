@@ -129,6 +129,13 @@ defmodule Epchat.Channels.Manager do
           _ ->
             Logger.debug "Cannot delete all channel members: #{channel.id}"
         end
+
+        case Db.Tokens.delete_all_for_channel channel.id do
+          :ok -> :ok
+          _ ->
+            Logger.debug "Cannot delete all channel tokens: #{channel.id}"
+        end
+
         case Db.Channels.delete channel.id do
           :ok -> :ok
           _ ->
