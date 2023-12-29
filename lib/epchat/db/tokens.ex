@@ -86,4 +86,15 @@ defmodule Epchat.Db.Tokens do
     # ------------------------------------------------------------- / DUP-005
     end
   end
+
+  # -----
+
+  def valid?(token) do
+    if :os.system_time(:second) > token.created_at + 60 do
+      delete token.id
+      false
+    else
+      true
+    end
+  end
 end
