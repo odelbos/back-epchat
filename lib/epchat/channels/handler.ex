@@ -119,6 +119,9 @@ defmodule Epchat.Channels.Handler do
       {:not_member, :not_member} ->
         %{code: 400, tag: :not_member, msg: "Not a channel member"}
 
+      {:not_admin, :not_admin} ->
+        %{code: 400, tag: :not_member, msg: "Not the channel admin"}
+
       {:not_found, :channel_and_user} ->
         %{code: 400, tag: :channel_and_user, msg: "Channel and user does not exists"}
 

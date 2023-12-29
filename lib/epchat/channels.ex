@@ -140,10 +140,28 @@ defmodule Epchat.Channels do
   # -----
 
   def adm_request_invit_link(channel_id, user_id) do
-    msg = %{
-      token: "--the token--",
-    }
-    {:ok, msg}
+    case get_channel_and_user channel_id, user_id, true do
+      {:error, reason} -> {:error, reason}
+      {:not_found, reason} -> {:not_found, reason}
+      {:not_member, _, _} -> {:not_member, :not_member}
+      {:ok, channel, user, membership} ->
+        if channel.owner_id == user.id do
+          do_adm_request_invit_link channel, user, membership
+        else
+          {:not_admin, :not_admin}
+        end
+    end
+  end
+
+  def do_adm_request_invit_link(channel, _user, _membership) do
+    # Generate a token for the channel
+    case Db.Tokens.create channel.id do
+      {:error, reason} -> {:error, reason}
+      {:ok, nil} -> {:error, :token_not_created}
+      {:ok, token} ->
+        msg = %{token: token.id}
+        {:ok, msg}
+    end
   end
 
   # -----
