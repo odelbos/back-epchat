@@ -41,6 +41,23 @@ defmodule Epchat.Db.Tokens do
     # ------------------------------------------------------------- / DUP-002
   end
 
+  def get_for_channel(id, channel_id) do
+    query = """
+      SELECT id, channel_id, created_at FROM 'tokens' WHERE id=? AND channel_id=?; 
+    """
+    # -----------------------------------------Duplicate-Code-------- DUP-002
+    case Db.execute query, [id, channel_id] do
+      {:ok, [], _} -> {:ok, nil}
+      {:ok, rows, fields} ->
+        [first | _rest] = Utils.reshape_as_list_of_map rows, fields
+        {:ok, first}
+      {:error, reason} ->
+        Logger.debug "Cannot get user, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-002
+  end
+
   def all() do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens'; 
