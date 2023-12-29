@@ -54,6 +54,15 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
+  def event_in(channel_id, "ch_join_with_token", data, state) do
+    case Channels.join_with_token channel_id, data.token, state.user_id, self() do
+      {:ok, msg} ->
+        new_state = Map.put(state, :channels, [channel_id | state.channels])
+        reply channel_id, :ch_joined, msg, new_state
+      error -> reply_error channel_id, error, state
+    end
+  end
+
   def event_in(channel_id, "ch_members", _data, state) do
     case Channels.members channel_id, state.user_id do
       {:ok, msg} ->
@@ -121,6 +130,9 @@ defmodule Epchat.Channels.Handler do
 
       {:not_admin, :not_admin} ->
         %{code: 400, tag: :not_member, msg: "Not the channel admin"}
+
+      {:invalid_token, :invalid_token} ->
+        %{code: 400, tag: :invalid_token, msg: "Invalid token"}
 
       {:not_found, :channel_and_user} ->
         %{code: 400, tag: :channel_and_user, msg: "Channel and user does not exists"}

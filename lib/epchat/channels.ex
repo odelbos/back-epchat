@@ -3,28 +3,76 @@ defmodule Epchat.Channels do
   alias Epchat.Db
   alias Epchat.Channels
 
+  # NOTE: Only the channel admin (ie: the owner) can use the join/3 function
   def join(channel_id, user_id, pid) do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
 
       {:not_member, channel, user} ->
-        case Db.Memberships.create channel, user, pid do
-          {:error, reason} -> {:error, reason}
-          {:ok, nil} -> {:error, :membership_not_created}
-          {:ok, _membership} -> do_join channel, user, pid
+        if channel.owner_id == user.id do
+          case Db.Memberships.create channel, user, pid do
+            {:error, reason} -> {:error, reason}
+            {:ok, nil} -> {:error, :membership_not_created}
+            {:ok, _membership} ->
+              msg = %{
+                members: [%{id: user.id, nickname: user.nickname}],
+              }
+              {:ok, msg}
+          end
+        else
+          {:not_admin, :not_admin}
         end
 
       {:ok, channel, user, _membership} ->
-        case Db.Memberships.update_pid channel.id, user.id, pid do
-          {:error, reason} -> {:error, reason}
-          {:ok, nil} -> {:error, :membership_not_exists}
-          {:ok, _membership} -> do_join channel, user, pid
+        if channel.owner_id == user.id do
+          case Db.Memberships.update_pid channel.id, user.id, pid do
+            {:error, reason} -> {:error, reason}
+            {:ok, nil} -> {:error, :membership_not_exists}
+            {:ok, _membership} ->
+              msg = %{
+                members: [%{id: user.id, nickname: user.nickname}],
+              }
+              {:ok, msg}
+          end
+        else
+          {:not_admin, :not_admin}
         end
     end
   end
 
-  defp do_join(channel, user, pid) do
+  # -----
+
+  def join_with_token(channel_id, token_id, user_id, pid) do
+    case Epchat.Db.Tokens.get_for_channel token_id, channel_id do
+      {:error, reason} -> {:error, reason}
+      {:ok, nil} -> {:invalid_token, :invalid_token}
+      {:ok, token} ->
+        if Db.Tokens.valid? token do
+          # Token is one time usage
+          Db.Tokens.delete token.id
+          join_with_token_create_membership channel_id, user_id, pid
+        else
+          {:invalid_token, :invalid_token}
+        end
+    end
+  end
+
+  defp join_with_token_create_membership(channel_id, user_id, pid) do
+    case get_channel_and_user channel_id, user_id do
+      {:error, reason} -> {:error, reason}
+      {:not_found, reason} -> {:not_found, reason}
+
+      {:ok, channel, user} ->
+        case Db.Memberships.create channel, user, pid do
+          {:error, reason} -> {:error, reason}
+          {:ok, nil} -> {:error, :membership_not_created}
+          {:ok, _membership} -> do_join_with_token channel, user, pid
+        end
+    end
+  end
+
+  defp do_join_with_token(channel, user, pid) do
     case Db.Memberships.all_members channel.id do
       {:error, reason} -> {:error, reason}
       {:ok, members} ->
