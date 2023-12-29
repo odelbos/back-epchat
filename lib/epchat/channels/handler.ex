@@ -84,7 +84,7 @@ defmodule Epchat.Channels.Handler do
   end
 
   # This event is received when the admin (ie: the owner) of the channel
-  # request a new invitaion link.
+  # request a new invitation link.
   def event_in(channel_id, "adm_invit_link", %{channel_id: channel_id} = _data, state) do
     case Channels.adm_request_invit_link channel_id, state.user_id do
       {:ok, msg} ->
