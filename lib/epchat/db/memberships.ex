@@ -101,7 +101,6 @@ defmodule Epchat.Db.Memberships do
     """
     # TODO: -----------------------------------Duplicate-Code-------- DUP-005
     case Db.execute query, [channel_id] do
-      # TODO: Duplicate code, start: DUP-003
       {:ok, [], _} -> :ok
       {:error, reason} ->
         Logger.debug "Cannot delete all memberships, reason: #{reason}"
