@@ -40,12 +40,12 @@ defmodule Epchat.Channels.Handler do
   def handle_in({msg, [opcode: :text]}, state) do
     payload = Jason.decode! msg, keys: :atoms!
     %{channel_id: channel_id, event: event, data: data} = payload
-    event channel_id, event, data, state
+    event_in channel_id, event, data, state
   end
 
   # -----
 
-  def event(channel_id, "ch_join", _data, state) do
+  def event_in(channel_id, "ch_join", _data, state) do
     case Channels.join channel_id, state.user_id, self() do
       {:ok, msg} ->
         new_state = Map.put(state, :channels, [channel_id | state.channels])
@@ -54,7 +54,16 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
-  def event(channel_id, "ch_members", _data, state) do
+  def event_in(channel_id, "ch_join_with_token", data, state) do
+    case Channels.join_with_token channel_id, data.token, state.user_id, self() do
+      {:ok, msg} ->
+        new_state = Map.put(state, :channels, [channel_id | state.channels])
+        reply channel_id, :ch_joined, msg, new_state
+      error -> reply_error channel_id, error, state
+    end
+  end
+
+  def event_in(channel_id, "ch_members", _data, state) do
     case Channels.members channel_id, state.user_id do
       {:ok, msg} ->
         reply channel_id, :ch_members, msg, state
@@ -62,9 +71,19 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
-  def event(channel_id, "ch_msg", %{msg: msg} = _data, state) do
+  def event_in(channel_id, "ch_msg", %{msg: msg} = _data, state) do
     case Channels.message channel_id, state.user_id, msg do
       :ok -> {:ok, state}
+      error -> reply_error channel_id, error, state
+    end
+  end
+
+  # This event is received when the admin (ie: the owner) of the channel
+  # request a new invitaion link.
+  def event_in(channel_id, "adm_invit_link", %{channel_id: channel_id} = _data, state) do
+    case Channels.adm_request_invit_link channel_id, state.user_id do
+      {:ok, msg} ->
+        reply channel_id, :adm_invit_link, msg, state
       error -> reply_error channel_id, error, state
     end
   end
@@ -108,6 +127,12 @@ defmodule Epchat.Channels.Handler do
 
       {:not_member, :not_member} ->
         %{code: 400, tag: :not_member, msg: "Not a channel member"}
+
+      {:not_admin, :not_admin} ->
+        %{code: 400, tag: :not_member, msg: "Not the channel admin"}
+
+      {:invalid_token, :invalid_token} ->
+        %{code: 400, tag: :invalid_token, msg: "Invalid token"}
 
       {:not_found, :channel_and_user} ->
         %{code: 400, tag: :channel_and_user, msg: "Channel and user does not exists"}

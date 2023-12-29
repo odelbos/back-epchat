@@ -40,7 +40,7 @@ defmodule Epchat.Db.Utils do
   # -----
 
   # Helper to validate database id format (pk)
-  def validate_id(id) do
+  def validate_id_format(id) do
     conf = Application.fetch_env! :epchat, :db
     re = "^[a-zA-Z0-9]{#{conf.ids_length}}$"
     String.match? id, ~r/#{re}/
