@@ -38,6 +38,11 @@ defmodule Epchat.Channels.Handler do
   # }
   # ... and must be JSON encoded.
   def handle_in({msg, [opcode: :text]}, state) do
+    #
+    # NOTE: if json is invalid, we let crash the websocket connection
+    # without any explaination. In this case, it's someone who is not
+    # using our official front-end and try to hack.
+    #
     payload = Jason.decode! msg, keys: :atoms!
     %{channel_id: channel_id, event: event, data: data} = payload
     event_in channel_id, event, data, state
@@ -87,6 +92,13 @@ defmodule Epchat.Channels.Handler do
       error -> reply_error channel_id, error, state
     end
   end
+
+  #
+  # NOTE: if event_in does not pattern match the event, we let crash the
+  # websocket connection without any explaination.
+  # In this case, it's someone who is not using our official front-end and
+  # try to hack.
+  #
 
   # -----
 
