@@ -139,6 +139,15 @@ defmodule Epchat.Channels do
 
   # -----
 
+  def adm_request_invit_link(channel_id, user_id) do
+    msg = %{
+      token: "--the token--",
+    }
+    {:ok, msg}
+  end
+
+  # -----
+
   def broadcast(channel, members, event, msg, from) do
     data = %{
       channel_id: channel.id,

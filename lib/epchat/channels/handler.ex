@@ -69,6 +69,16 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
+  # This event is received when the admin (ie: the owner) of the channel
+  # request a new invitaion link.
+  def event_in(channel_id, "adm_invit_link", %{channel_id: channel_id} = _data, state) do
+    case Channels.adm_request_invit_link channel_id, state.user_id do
+      {:ok, msg} ->
+        reply channel_id, :adm_invit_link, msg, state
+      error -> reply_error channel_id, error, state
+    end
+  end
+
   # -----
 
   # Websocket crashed or closed by client
