@@ -107,7 +107,8 @@ defmodule Epchat.Db.Tokens do
   # -----
 
   def valid?(token) do
-    if :os.system_time(:second) > token.created_at + 60 do
+    conf = Application.fetch_env! :epchat, :channels
+    if :os.system_time(:second) > token.created_at + conf.token_life_time do
       delete token.id
       false
     else
