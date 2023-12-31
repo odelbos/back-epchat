@@ -111,12 +111,12 @@ defmodule Epchat.Controllers.Channels do
       {:error, reason} ->
         send_500_internal_error conn, reason, "Internal Server Error"
       {:ok, nil} ->
-        send_400_bad_params conn             # Token does not exists
+        send_400_invalid_token conn            # Token does not exists
       {:ok, token} ->
         if Db.Tokens.valid? token do
           do_join_channel conn, token, user
         else
-          send_400_bad_params conn           # Invalid token
+          send_400_invalid_token conn          # Invalid token
         end
     end
   end
@@ -156,13 +156,19 @@ defmodule Epchat.Controllers.Channels do
   end
 
   defp send_500_internal_error(conn, reason, msg) do
-    Logger.debug msg <> ", reason: #{reason}"
-    send_with_status conn, 500, %{status: 500, msg: msg}
+    Logger.debug "500, " <> msg <> ", reason: #{reason}"
+    send_with_status conn, 500, %{status: 500, tag: "internal-server-error"}
   end
 
   defp send_400_bad_params(conn) do
-    Logger.debug "Error, bad or missing parameter"
-    data = %{status: 400, msg: "Error, bad or missing parameter"}
+    Logger.debug "400, bad or missing parameter"
+    data = %{status: 400, tag: "bad-params"}
+    send_with_status conn, 400, data
+  end
+
+  defp send_400_invalid_token(conn) do
+    Logger.debug "400, invalid token"
+    data = %{status: 400, tag: "invalid-token"}
     send_with_status conn, 400, data
   end
 end
