@@ -124,23 +124,11 @@ defmodule Epchat.Channels.Manager do
         Channels.broadcast channel, members, :ch_closed, %{reason: reason}
 
         # Clean up database
-        case Db.Memberships.delete_all_members channel.id do
-          :ok -> :ok
-          _ ->
-            Logger.debug "Cannot delete all channel members: #{channel.id}"
-        end
-
-        case Db.Tokens.delete_all_for_channel channel.id do
-          :ok -> :ok
-          _ ->
-            Logger.debug "Cannot delete all channel tokens: #{channel.id}"
-        end
-
-        case Db.Channels.delete channel.id do
-          :ok -> :ok
-          _ ->
-            Logger.debug "Cannot delete channel: #{channel.id}"
-        end
+        # NOTE: Don't need to handle anything, if there is an error the Db.*
+        # modules will log it.
+        Db.Tokens.delete_all_for_channel channel.id
+        Db.Memberships.delete_all_members channel.id
+        Db.Channels.delete channel.id
 
         Logger.debug "Channel closed: #{channel.id}"
         :ok
