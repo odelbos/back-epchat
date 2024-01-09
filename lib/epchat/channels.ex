@@ -187,6 +187,10 @@ defmodule Epchat.Channels do
 
   # -----
 
+  #
+  # TODO: Refactor :not_member and :not_admin to {:forbidden, :not_admin}
+  #
+
   def adm_request_invit_link(channel_id, user_id) do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
@@ -194,14 +198,35 @@ defmodule Epchat.Channels do
       {:not_member, _, _} -> {:not_member, :not_member}
       {:ok, channel, user, membership} ->
         if channel.owner_id == user.id do
-          do_adm_request_invit_link channel, user, membership
+          do_check_invit_limit channel, user, membership
         else
           {:not_admin, :not_admin}
         end
     end
   end
 
-  def do_adm_request_invit_link(channel, _user, _membership) do
+  defp do_check_invit_limit(channel, user, membership) do
+    conf = Application.fetch_env! :epchat, :channels
+    case Db.Tokens.count_for_channel channel.id do
+      {:error, reason} -> {:error, reason}
+      {:ok, nb} ->
+        if nb >= conf.members_limit do
+          {:forbidden, :tokens_limit}
+        else
+          case Db.Memberships.count_members channel.id do
+            {:error, reason} -> {:error, reason}
+            {:ok, nb} ->
+              if nb >= conf.members_limit do
+                {:forbidden, :members_limit}
+              else
+                do_adm_request_invit_link channel, user, membership
+              end
+          end
+        end
+    end
+  end
+
+  defp do_adm_request_invit_link(channel, _user, _membership) do
     # Generate a token for the channel
     case Db.Tokens.create channel.id do
       {:error, reason} -> {:error, reason}
