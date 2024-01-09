@@ -135,13 +135,19 @@ defmodule Epchat.Channels.Handler do
   defp reply_error(channel_id, error, state) do
     msg = case error do
       {:error, _reason} ->
-        %{code: 500, msg: "Internal Server Error"}
+        %{code: 500, tag: :server_error, msg: "Internal Server Error"}
 
       {:not_member, :not_member} ->
         %{code: 400, tag: :not_member, msg: "Not a channel member"}
 
       {:not_admin, :not_admin} ->
         %{code: 400, tag: :not_member, msg: "Not the channel admin"}
+
+      {:forbidden, :tokens_limit} ->
+        %{code: 403, tag: :tokens_limit, msg: "Channel tokens limit"}
+
+      {:forbidden, :members_limit} ->
+        %{code: 403, tag: :members_limit, msg: "Channel members limit"}
 
       {:invalid_token, :invalid_token} ->
         %{code: 400, tag: :invalid_token, msg: "Invalid token"}

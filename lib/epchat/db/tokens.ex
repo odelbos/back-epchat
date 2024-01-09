@@ -28,7 +28,7 @@ defmodule Epchat.Db.Tokens do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens' WHERE id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-002
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
       {:ok, [], _} -> {:ok, nil}
       {:ok, rows, fields} ->
@@ -45,7 +45,7 @@ defmodule Epchat.Db.Tokens do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens' WHERE id=? AND channel_id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-002
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id, channel_id] do
       {:ok, [], _} -> {:ok, nil}
       {:ok, rows, fields} ->
@@ -58,11 +58,30 @@ defmodule Epchat.Db.Tokens do
     # ------------------------------------------------------------- / DUP-002
   end
 
+  # -----
+
+  def count_for_channel(channel_id) do
+    query = """
+      SELECT COUNT(*) AS nb FROM 'tokens' WHERE channel_id=?
+    """
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-21
+    case Db.execute query, [channel_id] do
+      {:ok, rows, _fields} ->
+        {:ok, (rows |> Enum.at(0) |> Enum.at(0))}
+      {:error, reason} ->
+        Logger.debug "Cannot get count channel tokens, channel: #{channel_id}, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-21
+  end
+
+  # -----
+
   def all() do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens'; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-003
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query do
       {:ok, [], _} -> {:ok, []}
       {:ok, rows, fields} ->

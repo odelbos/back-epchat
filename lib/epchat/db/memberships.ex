@@ -60,6 +60,23 @@ defmodule Epchat.Db.Memberships do
 
   # -----
 
+  def count_members(channel_id) do
+    query = """
+      SELECT COUNT(*) AS nb FROM 'memberships' WHERE channel_id=?
+    """
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-21
+    case Db.execute query, [channel_id] do
+      {:ok, rows, _fields} ->
+        {:ok, (rows |> Enum.at(0) |> Enum.at(0))}
+      {:error, reason} ->
+        Logger.debug "Cannot get count channel membership, channel: #{channel_id}, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-21
+  end
+
+  # -----
+
   def all_members(channel_id) do
     query = """
       SELECT u.id, u.nickname, cu.pid, cu.joined_at FROM 'memberships' AS cu
