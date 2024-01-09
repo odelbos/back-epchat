@@ -28,7 +28,7 @@ defmodule Epchat.Db.Tokens do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens' WHERE id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-002
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
       {:ok, [], _} -> {:ok, nil}
       {:ok, rows, fields} ->
@@ -45,7 +45,7 @@ defmodule Epchat.Db.Tokens do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens' WHERE id=? AND channel_id=?; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-002
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id, channel_id] do
       {:ok, [], _} -> {:ok, nil}
       {:ok, rows, fields} ->
@@ -58,11 +58,13 @@ defmodule Epchat.Db.Tokens do
     # ------------------------------------------------------------- / DUP-002
   end
 
+  # -----
+
   def all() do
     query = """
       SELECT id, channel_id, created_at FROM 'tokens'; 
     """
-    # -----------------------------------------Duplicate-Code-------- DUP-003
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query do
       {:ok, [], _} -> {:ok, []}
       {:ok, rows, fields} ->
