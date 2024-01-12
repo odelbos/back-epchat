@@ -68,6 +68,10 @@ defmodule Epchat.Channels.Handler do
     end
   end
 
+
+
+
+
   def event_in(channel_id, "ch_members", _data, state) do
     case Channels.members channel_id, state.user_id do
       {:ok, msg} ->
