@@ -239,6 +239,24 @@ defmodule Epchat.Channels do
 
   # -----
 
+  def adm_close(channel_id, user_id) do
+    case get_channel_and_user channel_id, user_id, true do
+      {:error, reason} -> {:error, reason}
+      {:not_found, reason} -> {:not_found, reason}
+      {:not_member, _, _} -> {:not_member, :not_member}
+
+      {:ok, channel, user, _membership} ->
+        if channel.owner_id == user.id do
+          Channels.Manager.close_channel channel.id, :adm_closed
+          :ok
+        else
+          {:not_admin, :not_admin}
+        end
+    end
+  end
+
+  # -----
+
   def broadcast(channel, members, event, msg, from) do
     data = %{
       channel_id: channel.id,
