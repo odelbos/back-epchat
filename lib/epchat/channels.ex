@@ -21,7 +21,7 @@ defmodule Epchat.Channels do
               {:ok, msg}
           end
         else
-          {:not_admin, :not_admin}
+          {:forbidden, :not_admin}
         end
 
       {:ok, channel, user, _membership} ->
@@ -36,7 +36,7 @@ defmodule Epchat.Channels do
               {:ok, msg}
           end
         else
-          {:not_admin, :not_admin}
+          {:forbidden, :not_admin}
         end
     end
   end
@@ -46,14 +46,14 @@ defmodule Epchat.Channels do
   def join_with_token(channel_id, token_id, user_id, pid) do
     case Epchat.Db.Tokens.get_for_channel token_id, channel_id do
       {:error, reason} -> {:error, reason}
-      {:ok, nil} -> {:invalid_token, :invalid_token}
+      {:ok, nil} -> {:forbidden, :invalid_token}
       {:ok, token} ->
         if Db.Tokens.valid? token do
           # Token is one time usage
           Db.Tokens.delete token.id
           join_with_token_create_membership channel_id, user_id, pid
         else
-          {:invalid_token, :invalid_token}
+          {:forbidden, :invalid_token}
         end
     end
   end
@@ -100,7 +100,7 @@ defmodule Epchat.Channels do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
-      {:not_member, _, _} -> {:not_member, :not_member}
+      {:not_member, _, _} -> {:forbidden, :not_member}
 
       {:ok, channel, _user, _membership} ->
         case Db.Memberships.all_members channel.id do
@@ -125,7 +125,7 @@ defmodule Epchat.Channels do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
-      {:not_member, _, _} -> {:not_member, :not_member}
+      {:not_member, _, _} -> {:forbidden, :not_member}
 
       {:ok, channel, user, _membership} ->
         case Db.Memberships.all_members channel_id do
@@ -155,7 +155,7 @@ defmodule Epchat.Channels do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
-      {:not_member, _, _} -> {:not_member, :not_member}
+      {:not_member, _, _} -> {:forbidden, :not_member}
 
       {:ok, channel, user, membership} ->
         do_leave channel, user, membership
@@ -187,20 +187,16 @@ defmodule Epchat.Channels do
 
   # -----
 
-  #
-  # TODO: Refactor :not_member and :not_admin to {:forbidden, :not_admin}
-  #
-
   def adm_request_invit_link(channel_id, user_id) do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
-      {:not_member, _, _} -> {:not_member, :not_member}
+      {:not_member, _, _} -> {:forbidden, :not_member}
       {:ok, channel, user, membership} ->
         if channel.owner_id == user.id do
           do_check_invit_limit channel, user, membership
         else
-          {:not_admin, :not_admin}
+          {:forbidden, :not_admin}
         end
     end
   end
@@ -243,14 +239,14 @@ defmodule Epchat.Channels do
     case get_channel_and_user channel_id, user_id, true do
       {:error, reason} -> {:error, reason}
       {:not_found, reason} -> {:not_found, reason}
-      {:not_member, _, _} -> {:not_member, :not_member}
+      {:not_member, _, _} -> {:forbidden, :not_member}
 
       {:ok, channel, user, _membership} ->
         if channel.owner_id == user.id do
           Channels.Manager.close_channel channel.id, :adm_closed
           :ok
         else
-          {:not_admin, :not_admin}
+          {:forbidden, :not_admin}
         end
     end
   end

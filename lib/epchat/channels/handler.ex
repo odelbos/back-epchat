@@ -146,11 +146,11 @@ defmodule Epchat.Channels.Handler do
       {:error, _reason} ->
         %{code: 500, tag: :server_error, msg: "Internal Server Error"}
 
-      {:not_member, :not_member} ->
-        %{code: 400, tag: :not_member, msg: "Not a channel member"}
+      {:forbidden, :not_admin} ->
+        %{code: 403, tag: :not_admin, msg: "Not the channel admin"}
 
-      {:not_admin, :not_admin} ->
-        %{code: 400, tag: :not_member, msg: "Not the channel admin"}
+      {:forbidden, :not_member} ->
+        %{code: 403, tag: :not_member, msg: "Not a channel member"}
 
       {:forbidden, :tokens_limit} ->
         %{code: 403, tag: :tokens_limit, msg: "Channel tokens limit"}
@@ -158,8 +158,8 @@ defmodule Epchat.Channels.Handler do
       {:forbidden, :members_limit} ->
         %{code: 403, tag: :members_limit, msg: "Channel members limit"}
 
-      {:invalid_token, :invalid_token} ->
-        %{code: 400, tag: :invalid_token, msg: "Invalid token"}
+      {:forbidden, :invalid_token} ->
+        %{code: 403, tag: :invalid_token, msg: "Invalid token"}
 
       {:not_found, :channel_and_user} ->
         %{code: 400, tag: :channel_and_user, msg: "Channel and user does not exists"}
