@@ -138,12 +138,12 @@ defmodule Epchat.Channels do
               at: :os.system_time(:second),
             }
 
-            # Update channel activity
-            Channels.Manager.update_channel_activity channel_id
-
             # TODO: Do not broadcast the msg to the sender?
             broadcast channel, members, :ch_msg, data
 
+            # Update activities
+            Channels.Manager.update_channel_activity channel_id
+            Db.Users.update_last_activity_at user_id
             :ok
         end
     end

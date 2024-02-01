@@ -5,7 +5,7 @@ defmodule Epchat.Db.Users do
 
   def create(nickname) do
     query = """
-      INSERT INTO 'users' (id, nickname) VALUES (?, ?); 
+      INSERT INTO 'users' (id, nickname, last_activity_at) VALUES (?, ?, ?); 
     """
     case validate_nickname nickname do
       true ->
@@ -13,7 +13,7 @@ defmodule Epchat.Db.Users do
         # TODO: Check that id does not already exists
         conf = Application.fetch_env! :epchat, :db
         id = Epchat.Utils.generate_b62 conf.ids_length
-        case Db.execute query, [id, nickname] do
+        case Db.execute query, [id, nickname, :os.system_time(:second)] do
           {:ok, [], []} -> get id
           {:error, reason} ->
             Logger.debug "Cannot create user, reason: #{reason}"
@@ -37,7 +37,7 @@ defmodule Epchat.Db.Users do
 
   def get(id) do
     query = """
-      SELECT id, nickname FROM 'users' WHERE id=?; 
+      SELECT id, nickname, last_activity_at FROM 'users' WHERE id=?; 
     """
     # -----------------------------------------Duplicate-Code-------- DUP-002
     case Db.execute query, [id] do
@@ -54,7 +54,7 @@ defmodule Epchat.Db.Users do
 
   def all() do
     query = """
-      SELECT id, nickname FROM 'users'; 
+      SELECT id, nickname, last_activity_at FROM 'users'; 
     """
     # -----------------------------------------Duplicate-Code-------- DUP-003
     case Db.execute query do
@@ -68,14 +68,30 @@ defmodule Epchat.Db.Users do
     # ------------------------------------------------------------- / DUP-003
   end
 
+  def all_inactive_since(since) do
+    query = """
+      SELECT id, nickname, last_activity_at FROM 'users' WHERE last_activity_at <= ?; 
+    """
+    # -----------------------------------------Duplicate-Code-------- DUP-003
+    case Db.execute query, [since] do
+      {:ok, [], _} -> {:ok, []}
+      {:ok, rows, fields} ->
+        {:ok, Utils.reshape_as_list_of_map(rows, fields)}
+      {:error, reason} ->
+        Logger.debug "Cannot get all users, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-003
+  end
+
   def update(id, nickname) do
     query = """
-      UPDATE 'users' SET nickname=? WHERE id=?; 
+      UPDATE 'users' SET nickname=?, last_activity_at=? WHERE id=?; 
     """
     case validate_nickname nickname do
       true ->
         # -----------------------------------------Duplicate-Code-------- DUP-004
-        case Db.execute query, [nickname, id] do
+        case Db.execute query, [nickname, :os.system_time(:second), id] do
           {:ok, [], []} -> get id
           {:error, reason} ->
             Logger.debug "Cannot update user, reason: #{reason}"
@@ -84,6 +100,36 @@ defmodule Epchat.Db.Users do
         # ------------------------------------------------------------- / DUP-004
       false ->
         {:error, :bad_params}
+    end
+  end
+
+  def update_last_activity_at(id) do
+    query = """
+      UPDATE 'users' SET last_activity_at=? WHERE id=?; 
+    """
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-004
+    case Db.execute query, [:os.system_time(:second), id] do
+      {:ok, [], []} -> get id
+      {:error, reason} ->
+        Logger.debug "Cannot update user, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-004
+  end
+
+  # -----
+
+  def delete(id) do
+    query = """
+      DELETE FROM 'users' WHERE id=?; 
+    """
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-005
+    case Db.execute query, [id] do
+      {:ok, [], _} -> :ok
+      {:error, reason} ->
+        Logger.debug "Cannot delete user, reason: #{reason}"
+        {:error, reason}
+    # ------------------------------------------------------------- / DUP-005
     end
   end
 
