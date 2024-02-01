@@ -16,6 +16,7 @@ defmodule Epchat.Application do
       {Epchat.Channels.Manager, []},
       {Registry, [keys: :unique, name: :channels]},
       Epchat.Channels.Supervisor,
+      {Epchat.CleanupMonitor, []},
     ]
 
     opts = [strategy: :one_for_one, name: Epchat.Supervisor]
