@@ -119,6 +119,22 @@ defmodule Epchat.Db.Users do
 
   # -----
 
+  def delete(id) do
+    query = """
+      DELETE FROM 'users' WHERE id=?; 
+    """
+    # TODO: -----------------------------------Duplicate-Code-------- DUP-005
+    case Db.execute query, [id] do
+      {:ok, [], _} -> :ok
+      {:error, reason} ->
+        Logger.debug "Cannot delete user, reason: #{reason}"
+        {:error, reason}
+    # ------------------------------------------------------------- / DUP-005
+    end
+  end
+
+  # -----
+
   defp validate_nickname(nickname) do
     String.length(nickname) > 1 and String.length(nickname) < 15
   end
