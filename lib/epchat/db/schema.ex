@@ -13,7 +13,8 @@ defmodule Epchat.Db.Schema do
     query = """
       CREATE TABLE IF NOT EXISTS users (
           id TEXT PRIMARY KEY,
-          nickname TEXT NOT NULL
+          nickname TEXT NOT NULL,
+          last_activity_at INTEGER NOT NULL
       );
     """
     case Db.query conn, query do
