@@ -68,6 +68,22 @@ defmodule Epchat.Db.Users do
     # ------------------------------------------------------------- / DUP-003
   end
 
+  def all_inactive_since(since) do
+    query = """
+      SELECT id, nickname, last_activity_at FROM 'users' WHERE last_activity_at <= ?; 
+    """
+    # -----------------------------------------Duplicate-Code-------- DUP-003
+    case Db.execute query, [since] do
+      {:ok, [], _} -> {:ok, []}
+      {:ok, rows, fields} ->
+        {:ok, Utils.reshape_as_list_of_map(rows, fields)}
+      {:error, reason} ->
+        Logger.debug "Cannot get all users, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-003
+  end
+
   def update(id, nickname) do
     query = """
       UPDATE 'users' SET nickname=?, last_activity_at=? WHERE id=?; 
