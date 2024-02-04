@@ -151,7 +151,7 @@ defmodule Epchat.Controllers.Channels do
   defp send_with_status(conn, status, data) do
     conn
     |> put_resp_header("Access-Control-Allow-Origin", "*")
-    |> put_resp_header("Content_Type", "application/json;charset=UTF-8")
+    |> put_resp_header("Content-Type", "application/json;charset=UTF-8")
     |> send_resp(status, Jason.encode! data)
   end
 
