@@ -7,12 +7,14 @@ defmodule Epchat.Application do
   @impl true
   def start(_type, _args) do
 
-    conf = Application.fetch_env! :epchat, :db
-    Logger.debug "DB file: #{conf.file}"
+    db_conf = Application.fetch_env! :epchat, :db
+    Logger.debug "DB file: #{db_conf.file}"
+
+    bandit_conf = Application.fetch_env! :epchat, :bandit
 
     children = [
-      {Bandit, plug: Epchat.Router},
-      {Epchat.Db.Db, %{file: conf.file}},
+      {Bandit, plug: Epchat.Router, ip: bandit_conf.ip, port: bandit_conf.port},
+      {Epchat.Db.Db, %{file: db_conf.file}},
       {Epchat.Channels.Manager, []},
       {Registry, [keys: :unique, name: :channels]},
       Epchat.Channels.Supervisor,

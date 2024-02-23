@@ -4,6 +4,10 @@ import Config
 # config :logger, level: :warning
 
 config :epchat,
+  bandit: %{
+    ip: {0, 0, 0, 0},
+    port: 4000,
+  },
   db: %{
     file: ":memory:",
     ids_length: 15,
