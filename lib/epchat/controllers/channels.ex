@@ -83,11 +83,13 @@ defmodule Epchat.Controllers.Channels do
   # Private
   # -------------------------------------------------------------
 
+
   defp create_channel(conn, user) do
     case Channels.Manager.create_channel user do
       {:error, reason} ->
         send_500_internal_error conn, reason, "Internal Server Error"
       {:ok, nil} ->
+        IO.puts "========== 4"
         send_500_internal_error conn, "Bad params", "Cannot create channel"
       {:ok, channel} ->
         data = %{

@@ -113,14 +113,8 @@ defmodule Epchat.Channels.Handler do
 
   # Websocket crashed or closed by client
   # (need to leave all channels)
-  def terminate(code, state) do
-    # NOTE: code can be: :timeout, :remote
-
-    IO.puts "--- Terminate --------"       # TODO: Debug code
-    IO.inspect code
-    IO.inspect state
-    IO.puts "----------------------"
-
+  # NOTE: code can be: :timeout, :remote
+  def terminate(_code, state) do
     # Leave all joinned channels
     for channel_id <- state.channels do
       Channels.leave channel_id, state.user_id
