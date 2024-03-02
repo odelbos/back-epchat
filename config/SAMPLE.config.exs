@@ -1,8 +1,5 @@
 import Config
 
-# For production
-# config :logger, level: :warning
-
 config :epchat,
   bandit: %{
     ip: {0, 0, 0, 0},
@@ -22,3 +19,5 @@ config :epchat,
     inactivity_interval: 300,     # 5mn In seconds
     inactivity_limit: 600,        # 10mn in sseconds
   }
+
+import_config "#{config_env()}.exs"
