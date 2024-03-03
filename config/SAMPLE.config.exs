@@ -11,13 +11,13 @@ config :epchat,
   },
   channels: %{
     members_limit: 10,
-    token_life_time: 300,         # 5mn in seconds
+    token_life_time: 300,                         # 5mn in seconds
   },
   monitor: %{
-    users_inactivity_check_interval: 10,          # In seconds
-    users_inactivity_limit: 180,                  # 3mn in seconds
-    channels_inactivity_check_interval: 30,       # In seconds
-    channels_inactivity_limit: 60,                # 1mn in seconds
+    users_inactivity_check_interval: 3600,        # 1h in seconds
+    users_inactivity_limit: 3600 * 24 * 5,        # 5d in seconds
+    channels_inactivity_check_interval: 60,       # 1mn In seconds
+    channels_inactivity_limit: 600,               # 10mn in seconds
   }
 
 import_config "#{config_env()}.exs"
