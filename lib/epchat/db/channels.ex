@@ -20,6 +20,8 @@ defmodule Epchat.Db.Channels do
     # ------------------------------------------------------------- / DUP-001
   end
 
+  # -----
+
   def get(id) do
     query = """
       SELECT id, owner_id, last_activity_at FROM 'channels' WHERE id=?; 
@@ -37,6 +39,8 @@ defmodule Epchat.Db.Channels do
     # ------------------------------------------------------------- / DUP-002
   end
 
+  # -----
+
   def all() do
     query = """
       SELECT id, owner_id, last_activity_at FROM 'channels'; 
@@ -52,6 +56,24 @@ defmodule Epchat.Db.Channels do
     end
     # ------------------------------------------------------------- / DUP-003
   end
+
+  def all_inactive_since(since) do
+    query = """
+      SELECT id, owner_id, last_activity_at FROM 'channels' WHERE last_activity_at <= ?; 
+    """
+    # -----------------------------------------Duplicate-Code-------- DUP-003
+    case Db.execute query, [since] do
+      {:ok, [], _} -> {:ok, []}
+      {:ok, rows, fields} ->
+        {:ok, Utils.reshape_as_list_of_map(rows, fields)}
+      {:error, reason} ->
+        Logger.debug "Cannot get all users, reason: #{reason}"
+        {:error, reason}
+    end
+    # ------------------------------------------------------------- / DUP-003
+  end
+
+  # -----
 
   def update_last_activity_at(id) do
     query = """
