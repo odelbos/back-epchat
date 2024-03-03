@@ -20,7 +20,6 @@ defmodule Epchat.Channels.Manager do
       {:ok, nil} -> {:ok, nil}
       {:ok, channel} ->
         Logger.debug "Created channel: #{channel.id} - Owner: #{user.id}"
-        start_channel_monitor channel.id
         {:ok, channel}
     end
   end
@@ -30,14 +29,12 @@ defmodule Epchat.Channels.Manager do
   end
 
   def update_channel_activity(channel_id) do
-    case lookup_channel_monitor channel_id do
-      {:ok, monitor_pid} ->
-        send monitor_pid, :update_activity
-        Logger.debug "Updated activity for channel: #{channel_id}"
-        :ok
-      _ ->
-        Logger.debug "Cannot update channel activity: #{channel_id}"
-        :error
+    case Db.Channels.update_last_activity_at channel_id do
+      {:error, reason} ->
+        Logger.debug "Cannot update channel last activity: #{channel_id} - #{reason}"
+      {:ok, nil} ->
+        Logger.debug "Cannot update channel last activity: #{channel_id} - not found"
+      {:ok, _channel} -> :ok
     end
   end
 
@@ -45,51 +42,12 @@ defmodule Epchat.Channels.Manager do
 
   def handle_cast({:close_channel, channel_id, reason}, state) do
     close channel_id, reason
-    stop_channel_monitor channel_id
     {:noreply, state}
   end
-
 
   # ---------------------------------------------------------
   # Private
   # ---------------------------------------------------------
-
-  defp start_channel_monitor(channel_id) do
-    case Channels.Supervisor.start_channel_monitor channel_id do
-      {:ok, _pid} ->
-        Logger.debug "Started monitoring channel: #{channel_id}"
-        :ok
-      {:error, error} ->
-        Logger.debug "Cannot start monitoring channel: #{channel_id} - #{error}"
-        :error
-    end
-  end
-
-  defp stop_channel_monitor(channel_id) do
-    case lookup_channel_monitor channel_id do
-      {:ok, monitor_pid} ->
-        case Channels.Supervisor.stop_channel_monitor monitor_pid do
-          :ok ->
-            Logger.debug "Stopped monitoring channel: #{channel_id}"
-            :ok
-          {:error, :not_found} ->
-            Logger.debug "Cannot stop monitoring channel: #{channel_id} - monitor not found"
-            :error
-        end
-      _ -> :error
-    end
-  end
-
-  defp lookup_channel_monitor(channel_id) do
-    case Registry.lookup :channels, channel_id do
-      [{pid, _}] -> {:ok, pid}
-      [] ->
-        Logger.debug "Cannot lookup channel monitor: #{channel_id}"
-        {:error, :not_found}
-    end
-  end
-
-  # -----
 
   defp close(channel_id, reason) do
     case Db.Channels.get channel_id do

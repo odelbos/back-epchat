@@ -9,15 +9,15 @@ config :epchat,
     file: ":memory:",
     ids_length: 15,
   },
-  cleanup: %{
-    check_user_activity_interval: 3600,       # 1h in seconds
-    user_inactivity_limit: 3600 * 24 * 4,     # 5 days in seconds
-  },
   channels: %{
     members_limit: 10,
     token_life_time: 300,         # 5mn in seconds
-    inactivity_interval: 300,     # 5mn In seconds
-    inactivity_limit: 600,        # 10mn in sseconds
+  },
+  monitor: %{
+    users_inactivity_check_interval: 10,          # In seconds
+    users_inactivity_limit: 180,                  # 3mn in seconds
+    channels_inactivity_check_interval: 30,       # In seconds
+    channels_inactivity_limit: 60,                # 1mn in seconds
   }
 
 import_config "#{config_env()}.exs"
